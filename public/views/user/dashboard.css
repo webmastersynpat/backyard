@@ -1,0 +1,23 @@
+tr.aggregate{
+	display:none;
+}
+
+.drop-hover{
+	border: 1px dashed #ff0000 !important;
+}
+
+#new_lead_drop.drop-hover {
+	box-shadow: 0 0 1px #ff0000 inset;
+}
+
+.form-horizontal .control-label{
+	text-align:left;
+}
+
+.overflow-link {
+    overflow: hidden;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 106px;
+}

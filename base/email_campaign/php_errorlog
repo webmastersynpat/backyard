@@ -1,0 +1,3 @@
+[25-Aug-2015 22:39:15 CST6CDT] PHP Fatal error:  Can't use function return value in write context in /home/synpatne/public_html/email_campaign/index.php on line 96
+[25-Aug-2015 23:02:21 CST6CDT] PHP Fatal error:  require() [<a href='function.require'>function.require</a>]: Failed opening required 'PHPMailerAutoload.php' (include_path='.:/usr/local/php53/pear') in /home/synpatne/public_html/email_campaign/index.php on line 55
+[26-Aug-2015 00:24:43 CST6CDT] PHP Parse error:  syntax error, unexpected ',' in /home/synpatne/public_html/email_campaign/index.php on line 99
