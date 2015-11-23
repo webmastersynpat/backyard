@@ -26,6 +26,37 @@ class Customers extends CI_Controller {
 		die;
 	}
 	
+	public function campaign(){
+		$data = array(); 
+		if(isset($_POST) && count($_POST)>0){
+			$data = $this->lead_model->getCampaign($_POST['id'],$_POST['campaign_type']);
+		}
+		echo json_encode($data);
+		die;
+	}
+	
+	public function start_campaign(){
+		$campaign_id = 0; 
+		if(isset($_POST) && count($_POST)>0){
+			$campaign = json_decode($_POST['campaign_data'],true);
+		  $personList = explode(',',$campaign['person']);
+			 $company = explode(',',$campaign['company']);
+		   $emailList = explode(',',$campaign['email']);
+			   $campaign_id = $this->lead_model->insertCampaign(array("lead_id"=>$campaign['lead_id'],"lead_name"=>$campaign['lead_name'],"campaign_type"=>$campaign['campaign_type'],"template_file"=>$campaign['template_file'],"user_id"=>$campaign['user_id'],"subject"=>$campaign['subject'],"body"=>$campaign['body'],"start_date"=>$campaign['start_date']));
+			   if($campaign_id>0){				   
+				  if(count($emailList)>0){
+					   for($i=0;$i<count($emailList);$i++){
+						   if(!empty(trim($emailList[$i]))){
+							   $this->lead_model->insertCampaignList(array("campaign_id"=>$campaign_id,"person_name"=>trim($personList[$i]),"company"=>trim($company[$i]),"address"=>trim($emailList[$i])));
+						   }						   
+					   }
+				   }
+			   }
+		}
+		echo $campaign_id;
+		die;
+	}
+	
 	public function pre_contacts(){
 		$data = 0; 
 		if(isset($_POST) && count($_POST)>0){
@@ -48,7 +79,7 @@ class Customers extends CI_Controller {
 	
 	public function sales_activity_email_save(){
 		$data = 0; 
-		if(isset($_POST) && count($_POST)>0){
+		if(isset($_POST) && count($_POST)>0){			
 			if(isset($_POST['lead_id']) && (int)$_POST['lead_id']>0){
 				if(isset($_POST['to'])){
 					$to = trim($_POST['to']);
@@ -61,7 +92,6 @@ class Customers extends CI_Controller {
 							$getContact = $this->client_model->find_contact_by_linkedin($to);
 							$message = "Sales activity for linkedin.";
 						}
-						
 						if(count($getContact)){
 							$note = '';
 							$subject = '';
@@ -76,16 +106,17 @@ class Customers extends CI_Controller {
 							}
 							$saveData = array('lead_id'=>$_POST['lead_id'],'company_id'=>$getContact->company_id,'contact_id'=>$getContact->id,'type'=>$_POST['type'],'note'=>$note,'user_id'=>$_POST['user_id'],'subject'=>$subject,'activity_date'=>date('Y-m-d H:i:s'));	
 							
-							if((int)$_POST['main_activity']==1){
-								$data = $this->lead_model->insetSalesActivity($saveData);
-							} else if((int)$_POST['main_activity']==2){
+							if((int)$_POST['main_activity']==2){
 								$data = $this->lead_model->insertAcquistionActivity($saveData);
+							} else {
+								$data = $this->lead_model->insetSalesActivity($saveData);
 							}
 							if($data>0){
+								$this->lead_model->updateCampaignList($_POST['campaign_id'],$to);								
 								$user_history = array('lead_id'=>$_POST['lead_id'],'user_id'=>$_POST['user_id'],'message'=>$message,'opportunity_id'=>0,'create_date'=>date('Y-m-d H:i:s'));
 								$this->user_model->addUserHistory($user_history);
 							}							
-						} 
+						}
 					}
 				}
 			}

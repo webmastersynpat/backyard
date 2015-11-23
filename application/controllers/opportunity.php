@@ -1598,12 +1598,12 @@ class Opportunity extends CI_Controller {
 				$fileName = "Claim Illustration - ".$leadInfo->lead_name;
 				$leadFolderID = $leadInfo->folder_id;
 				$driveService = new DriveServiceHelper();
-				$fileInfo = $driveService->getFileIdByName($fileName);
+				$fileInfo = $driveService->getFileNameFromChildern($leadFolderID,$fileName);
 				if($fileInfo!=""){
 					$fileID = $fileInfo;
-				}
-				if(!empty($fileID)){
-					$ss_id = $fileID;
+				}				
+				if(is_object($fileID)){
+					$ss_id = $fileID->getId();
 					$spreadsheet = $service->getSpreadsheetById($ss_id);
 					$allWorkSheet = $service->getAllWorkSheets();
 					$sheetName = "Sheet1";
@@ -1621,16 +1621,17 @@ class Opportunity extends CI_Controller {
 							if(!empty($patent)){
 								$illustrationFileName = 'Synpat - Claim Illustration - '.$leadInfo->lead_name.' - '.$patent;
 								$driveService = new DriveServiceHelper();
-								$fileInfo = $driveService->getFileIdByName($illustrationFileName);
-								if($fileInfo!=""){
-									$getIllustrationFileInfo = $driveService->getFileInfo($fileInfo);
-									if($getIllustrationFileInfo){
+								$illuFolder = $driveService->getFileNameFromChildern($leadFolderID,"Illustration");
+								if(is_object($illuFolder) && !empty($illuFolder->getId())){
+									$driveService = new DriveServiceHelper();
+									$getIllustrationFileInfo = $driveService->getFileNameFromChildern($illuFolder->getId(),$illustrationFileName);
+									if(is_object($getIllustrationFileInfo)&& !empty($getIllustrationFileInfo->getId())){
 										$inventionsData[] = array("patent_id"=>$patent,"file"=>$getIllustrationFileInfo->alternateLink);
-									}									
+									}
 								}
 							}
 						}
-						if(count($inventionsData)){
+						if(count($inventionsData)>0){
 							$acquisitionData = $this->acquisition_model->getData($leadID);
 							if(count($acquisitionData) && !empty($acquisitionData['acquisition']->store_name)){
 								$curl = curl_init();

@@ -19,10 +19,27 @@ class Users extends CI_Controller {
 		$this->load->model('user_model');
 		$this->load->model('lead_model');
 		$this->load->model('client_model');
-		$this->load->model('general_model');
+		$this->load->model('customer_model');
+		$this->load->model('general_model');		
+		$this->load->model('acquisition_model');
+		$this->load->model('opportunity_model');
 		$this->layout->auto_render=false;	
 		$this->layout->layout='default';
 		error_reporting(E_ALL ^ (E_NOTICE | E_WARNING));		
+	}
+	
+	public function imap_emails(){
+		$messages  = array();
+		$hostname = '{imap.gmail.com:993/imap/ssl}INBOX';
+		$this->config->load('config');
+		$params = array('mailbox'=>'imap.gmail.com:993','username'=>$this->config->item('license_email'),'password'=>$this->config->item('license_password'),'encryption'=>'ssl');
+		$this->load->library('Imap',$params);
+		if($this->imap->isConnected()){
+			$this->imap->selectFolder('INBOX');
+			$messages = $this->imap->getMessages();
+		}
+		echo json_encode($messages);
+		die;		
 	}
 	
 	public function contacts_in_c(){
@@ -163,7 +180,7 @@ class Users extends CI_Controller {
 					}
 					
 				}
-			}
+			}  
 		}
 		die;
 	}
@@ -175,9 +192,20 @@ class Users extends CI_Controller {
 			$data['lead_templates_linkedin'] = $this->lead_model->getLeadTemplates($leadID,1);
 		}
 		$data['s'] = $s;
+		$data['acquisition'] = $this->acquisition_model->getData($leadID);
+		$data['category_list'] = $this->customer_model->categoryList(0);
+		$data['lead_data'] = $this->lead_model->getLeadData($leadID);
 		$this->layout->title_for_layout = 'Predefined Messages';
 		$this->layout->layout='opportunity';
 		$this->layout->render('user/lead_templates',$data);
+	}
+	
+	function delete_lead_template(){
+		$data = 0;
+		if(isset($_POST['id']) && (int)$_POST['id']>0){
+			$data = $this->lead_model->deleteLeadTemplate($_POST['id']);
+		}
+		echo $data;
 	}
 	
 	public function save_new_template(){
@@ -225,6 +253,36 @@ class Users extends CI_Controller {
 			if(isset($_POST['temp']) && !empty($_POST['temp']) && isset($_POST['lead_id']) && (int)$_POST['lead_id']>0){				
 				$template = $this->input->post('temp');
 				$lead_id = $this->input->post('lead_id');
+				$urlName ="";
+				$acquisition = $this->acquisition_model->getData($lead_id);
+				$category_list = $this->customer_model->categoryList(0);
+				$lead_data = $this->lead_model->getLeadData($lead_id);
+				if(!empty($acquisition['acquisition']->store_name)):				
+				if($acquisition['acquisition']->category>0){
+					if(count($category_list)>0){
+						for($cc=0;$cc<count($category_list);$cc++){
+							if($category_list[$cc]->id==$acquisition['acquisition']->category){
+								$urlName = $category_list[$cc]->name;
+								$urlName = str_replace('','_',$urlName);
+								$urlName = str_replace('-','_',$urlName);
+								$urlName = str_replace('&',' ',$urlName);
+								$urlName = str_replace('&amp;',' ',$urlName);
+								$urlName = preg_replace("/[^a-zA-Z0-9_\s-]/", "_", $urlName);
+								$urlName = preg_replace('/-/','_',$urlName);
+								$urlName = preg_replace('/[\s,\-!]/',' ',$urlName);
+								$urlName = preg_replace('/\s+/','_',$urlName);
+							}
+						}
+					}
+					if(!empty($urlName)){
+						$urlName ='/departments/'.$urlName.'-'.$acquisition['acquisition']->category.'/'.$lead_data->serial_number.'/';
+					}
+				}
+				endif;
+				if(!empty($urlName)){
+					$urlName = "http://www.synpat.com".$urlName;
+				}
+				$template =  str_replace('link-data-href=""',"href='".$urlName."'",$template);
 				$fileName = $lead_id.time().".html";
 				$fh = fopen($_SERVER['DOCUMENT_ROOT']."/public/upload/html/".$fileName,"w+");
 				fwrite($fh,$template);
@@ -835,6 +893,11 @@ class Users extends CI_Controller {
 					$sD = date('Y-m-d',strtotime($event['start_date']));
 					$sD = $sD.'T'.$mT.':'.$explodeM[1].':00-07:00';
 					$event['start']=array('dateTime'=>$sD,'timeZone'=> 'America/Los_Angeles');
+				} else {
+					$explodeM = explode(":",$sT[0]);
+					$sD = date('Y-m-d',strtotime($event['start_date']));
+					$sD = $sD.'T'.$explodeM[0].':'.$explodeM[1].':00-07:00';
+					$event['start']=array('dateTime'=>$sD,'timeZone'=> 'America/Los_Angeles');
 				}
 			}
 			$eTime = $event['end_time'];
@@ -849,6 +912,11 @@ class Users extends CI_Controller {
 					}
 					$sD = date('Y-m-d',strtotime($event['end_date']));
 					$sD = $sD.'T'.$mT.':'.$explodeM[1].':00-07:00';
+					$event['end']=array('dateTime'=>$sD,'timeZone'=> 'America/Los_Angeles');
+				} else {
+					$explodeM = explode(":",$eT[0]);
+					$sD = date('Y-m-d',strtotime($event['end_date']));
+					$sD = $sD.'T'.$explodeM[0].':'.$explodeM[1].':00-07:00';
 					$event['end']=array('dateTime'=>$sD,'timeZone'=> 'America/Los_Angeles');
 				}
 			}
@@ -867,8 +935,52 @@ class Users extends CI_Controller {
 			unset($event['start_date']);
 			$eventRes = $service->insert_event($event);
 			if(is_object($eventRes)){
-				if(isset($eventRes->htmlLink)){
+				if(isset($eventRes->htmlLink)){					
 					$this->lead_model->saveLeadEvent(array("lead_id"=>$this->input->post("lead_id"),"subject"=>$event['summary'],"event_link"=>$eventRes->htmlLink,"date"=>$startDate));
+					$startDate = date('Y-m-d H:i:s');
+					$user_history = array('lead_id'=>$this->input->post("lead_id"),'user_id'=>$this->session->userdata['id'],'message'=>"Create an event",'opportunity_id'=>0,'create_date'=>$startDate);
+					/**/
+					if(isset($_POST['acitivity_event_type']) && (int)$_POST['acitivity_event_type']>0){
+						if(!empty($this->input->post("email"))){	
+							$emailTo = explode(',',$this->input->post("email"));
+							$leadID = $this->input->post("lead_id");
+							$activityType = $_POST['acitivity_event_type'];
+							$subject = $event['summary'];
+							$event= array();
+							for($t=0;$t<count($emailTo);$t++){
+								if(!empty(trim($emailTo[$t]))){
+									$getContactDetail = $this->lead_model->getContactByEmail(trim($emailTo[$t]));
+									if(count($getContactDetail)>0 && $getContactDetail->email!=""){
+										if($activityType==1){
+											$checkCompanyInSalesActivity = $this->opportunity_model->checkCompanyInSales($leadID,$getContactDetail->company_id);
+											if(count($checkCompanyInSalesActivity)==0){
+												$this->opportunity_model->insertInvitees(array('lead_id'=>$leadID,'contact_id'=>$getContactDetail->company_id));
+											}											
+										} else {
+											$checkCompanyInAcquisitionActivity = $this->opportunity_model->checkCompanyInAcquisition($leadID,$getContactDetail->company_id);
+											if(count($checkCompanyInAcquisitionActivity)==0){
+												$this->opportunity_model->insertAcquisitionCompany(array('lead_id'=>$leadID,'contact_id'=>$getContactDetail->company_id));
+											}
+										}
+										$event['company_id'] = $getContactDetail->company_id;
+										$event['contact_id'] = $getContactDetail->id;
+										$event['type'] = 11;
+										$event['note'] = "<a href='".$eventRes->htmlLink."' target='_BLANK'>".$eventRes->htmlLink."</a>";
+										$event['user_id'] = $this->session->userdata['id'];
+										$event['email_id'] = 0;
+										$event['subject'] = $subject;
+										$event['lead_id'] = $leadID;
+										$event['activity_date'] = $startDate;
+										if($activityType==1){
+											$this->lead_model->insetSalesActivity($event);
+										} else {
+											$this->lead_model->insertAcquistionActivity($event);
+										}
+									}
+								}
+							}
+						}
+					}
 					echo json_encode(array('link'=>$eventRes->htmlLink));
 				}					
 			}

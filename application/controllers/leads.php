@@ -1648,7 +1648,11 @@ class Leads extends CI_Controller {
 				$activity['activity_date'] = date('Y-m-d H:i:s');
 				unset($activity['c_id']);
 				unset($activity['person']);
-				$data = $this->lead_model->insetSalesActivity($activity);
+				if($_POST['name']['main_type']=="2"){
+					$data = $this->lead_model->insertAcquistionActivity($activity);
+				} else {
+					$data = $this->lead_model->insetSalesActivity($activity);
+				}				
 				if($data>0){
 					$this->user_model->addUserHistory(array('user_id'=>$this->session->userdata['id'],'lead_id'=>$activity['lead_id'],'message'=>'Activity in sale','create_date'=>$activity['activity_date']));
 				}
