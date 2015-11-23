@@ -209,7 +209,7 @@ function enableEditor(){
 								<td><?php echo $Simulator;?></td>
 							</tr>
 							<tr>
-								<td>Suggestions</td>
+								<td>Documents</td>
 								<td><?php echo $Document;?></td>
 							</tr>
 							<tr>
@@ -247,7 +247,7 @@ function enableEditor(){
 									<textarea class='wysiwyg-editor' name='simulator_text' id='simulator_text'><?php echo $Simulator;?></textarea>
 								</div>	
 								<div class="form-group input-string-group select-string-group" style="margin-left: 0;">
-									<label class="control-label col-lg-12"><strong>Suggestions:</strong></label>
+									<label class="control-label col-lg-12"><strong>Documents:</strong></label>
 									<textarea class='wysiwyg-editor' name='suggestions_text' id='suggestions_text'><?php echo $Document;?></textarea>
 								</div>
 								<div class="form-group input-string-group select-string-group" style="margin-left: 0;">

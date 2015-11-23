@@ -131,7 +131,7 @@ div.dataTables_filter label{
 		window.parent.jQuery("#contactFormSubmit").get(0).reset();
 		window.parent.jQuery("#contactFormSubmit").find("#inviteeId").val("");
 		window.parent.jQuery("#contactFormSubmit").find("#marSector").find("option").removeAttr("selected");
-		window.parent.jQuery("#addContactForm").css('z-index','9999');
+		// window.parent.jQuery("#addContactForm").css('z-index','9999');
 		window.parent.jQuery(".multi-select").multiSelect('refresh');
 		window.parent.jQuery(".ms-container").append('<i class="glyph-icon icon-exchange"></i>');
 		window.parent.jQuery("#addContactForm").modal("show");

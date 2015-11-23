@@ -1,5 +1,13 @@
-<style>table.show{display:table!important}tr.aggregate{display:none}.drop-hover{border:1px dashed #ff0000!important}#new_lead_drop.drop-hover{box-shadow:0 0 1px #f00 inset}.form-horizontal .control-label{text-align:left}.overflow-link{overflow:hidden;text-decoration:none;text-overflow:ellipsis;white-space:nowrap;width:106px}tr.salesFDroppable.ui-droppable.drop-hover{border:0}tr.salesFDroppable.ui-droppable.drop-hover td{background:#ff0000!important;color:#fff}tr.salesFDroppable.ui-droppable.drop-hover td a{color:#fff}tr.grey td{background:#d1c8c8}table.dataTable thead th.sorting:after,table.dataTable thead th.sorting_asc:after,table.dataTable thead th.sorting_desc:after{display:none!important}#all_type_list_wrapper .DTFC_LeftHeadWrapper{top:-1px!important}#all_type_list_wrapper .dataTable tbody tr{height:auto!important}#all_type_list_wrapper .DTFC_LeftBodyLiner{overflow-x:hidden;width:211px!important}#all_type_list_wrapper .DTFC_LeftBodyLiner table{margin-bottom:1px!important}#all_type_list_wrapper .DTFC_LeftBodyLiner tbody tr label{display:block}#all_type_list_wrapper .DTFC_LeftBodyLiner tbody tr a{display:block;height:18px!important;line-height:1.2;overflow:hidden;text-overflow:ellipsis;width:200px;white-space:nowrap}.sales-activity-notes{max-height:60px;max-height:55px;max-width:308px;overflow:hidden}.sales-activity-notes.is-open{max-height:10000px;overflow:visible}.sales-activity-notes-content{overflow-x:auto}.sales-activity-notes-icon{display:block;font-size:18px;line-height:18px;margin-top:5px;text-align:center}.sales-activity-notes-icon .icon-angle-down{display:inline-block}.sales-activity-notes-icon .icon-angle-up{display:none}.sales-activity-notes-icon.is-open .icon-angle-down{display:none}.sales-activity-notes-icon.is-open .icon-angle-up{display:inline-block}.sales-activity-checkbox{margin-right:4px;position:relative;top:2px}.sales-activity-icon{font-size:14px;margin-right:-3px}#all_type_list tbody .drop-hover td{background-color:#d9534f!important}</style>
+<style>table.show{display:table!important}tr.aggregate{display:none}.drop-hover{border:1px dashed #ff0000!important}#new_lead_drop.drop-hover{box-shadow:0 0 1px #f00 inset}.form-horizontal .control-label{text-align:left}.overflow-link{overflow:hidden;text-decoration:none;text-overflow:ellipsis;white-space:nowrap;width:106px}tr.salesFDroppable.ui-droppable.drop-hover{border:0}tr.salesFDroppable.ui-droppable.drop-hover td{background:#ff0000!important;color:#fff}tr.salesFDroppable.ui-droppable.drop-hover td a{color:#fff}tr.grey td{background:#d1c8c8}table.dataTable thead th.sorting:after,table.dataTable thead th.sorting_asc:after,table.dataTable thead th.sorting_desc:after{display:none!important}
+#all_type_list_wrapper .DTFC_LeftHeadWrapper{top:-1px!important}
+/*#all_type_list_wrapper .dataTable tbody tr{height:auto!important}*/
+#all_type_list_wrapper .DTFC_LeftBodyLiner{overflow-x:hidden;width:211px!important; top:-1px !important;}
+#all_type_list_wrapper .DTFC_LeftBodyLiner table{margin-bottom:1px!important}
+#all_type_list_wrapper .DTFC_LeftBodyLiner tbody tr label{display:block}
+#all_type_list_wrapper .DTFC_LeftBodyLiner tbody tr a{display:block;height:18px!important;line-height:1.2;overflow:hidden;text-overflow:ellipsis;width:200px;white-space:nowrap}
+.sales-activity-notes{max-height:60px;max-height:55px;max-width:308px;overflow:hidden}.sales-activity-notes.is-open{max-height:10000px;overflow:visible}.sales-activity-notes-content{overflow-x:auto}.sales-activity-notes-icon{display:block;font-size:18px;line-height:18px;margin-top:5px;text-align:center}.sales-activity-notes-icon .icon-angle-down{display:inline-block}.sales-activity-notes-icon .icon-angle-up{display:none}.sales-activity-notes-icon.is-open .icon-angle-down{display:none}.sales-activity-notes-icon.is-open .icon-angle-up{display:inline-block}.sales-activity-checkbox{margin-right:4px;position:relative;top:2px}.sales-activity-icon{font-size:14px;margin-right:-3px}#all_type_list tbody .drop-hover td{background-color:#d9534f!important}</style>
 <script>jQuery(document).ready(function(){<?php if($this->session->userdata['initialise_email']=='0'):?>intialiseAfter();<?php endif;?>});function salesActivityNotesIconClick(b){var a=b.prev();a.toggleClass("is-open");b.toggleClass("is-open");return false}function checkSalesActivityNotesIcon(){$(".sales-activity-notes-icon").each(function(c,e){var b=$(e),a=b.prev();if(a.length){var d=a.find(".sales-activity-notes-content");if(d.length){if(d.outerHeight()<=60){b.hide()}else{b.show()}}}})}setInterval(checkSalesActivityNotesIcon,300);
+toggleOPen=0;
 function openAllCompanies(){
 	_ma = jQuery("#activityMainType").val();
 	_container = "";
@@ -9,9 +17,19 @@ function openAllCompanies(){
 		_container ='aquisitionTable';
 	}
 	jQuery("#"+_container).find('tbody').find('tr.master').each(function(){
-		jQuery(this).next().toggle();
+		if(toggleOPen==0){			
+			jQuery(this).next().css('display','table-row');
+		} else {
+			jQuery(this).next().css('display','none');
+		}
 	});
+	if(toggleOPen==0){	
+		toggleOPen = 1;
+	} else {
+		toggleOPen = 0;
+	}
 }
+
 </script>
 <div class="row"><div id="dashboard_charts" class="col-md-12 col-sm-12 col-xs-12"></div>
 <?php echo $Layout->element('task');?>
@@ -1154,7 +1172,7 @@ function openAllCompanies(){
 						</div>
 					</div>
 					<script>
-						var salesActivities = {'1':'Call In','2':'Call Out','3':'Email Sent','4':'Send Letter','5':'LinkedIn Message','6':'Email Received'};
+						var salesActivities = {'1':'Call In','2':'Call Out','3':'Email Sent','4':'Send Letter','5':'LinkedIn Message','6':'Email Received','11':'Calendar Event'};
 						$(function() { "use strict";
 							$('.date_calendar').datepicker({
 								format: 'yyyy-mm-dd'
@@ -1178,6 +1196,8 @@ function openAllCompanies(){
 														<option value=''>-- Select Activity --</option>
 														<option value="1">Call in</option>
 														<option value="2">Call out</option>
+														<option value="10">Add a Task</option>
+														<option value="11">Add an Calendar Event</option>
 														<option value="9">Compose</option>														
 														<option value="3">Send an email campaign</option>
 														<option value="5">LinkedIn message</option>

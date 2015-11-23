@@ -17,13 +17,28 @@
 
 
 	/** Tables */
+	.textarea-wrapper {
+		position: relative;
+	}
 	#timelineDataTable textarea.form-control {
-		border: #dfe8f1 solid 1px !important;
+		border: #dfe8f1 solid 1px;
 		box-shadow: none;
+		display: block;
 		height: 25px;
+		left: 0;
 		line-height: 1.4;
+		min-height: 25px;
+		overflow: hidden !important;
 		padding: 3px;
+		position: absolute;
+		top: 0;
 		width: 100%;
+	}
+	.textarea-content {
+		border: #dfe8f1 solid 1px;
+		min-height: 26px;
+		padding: 3px;
+		/*display: none;*/
 	}
 
 
@@ -67,6 +82,16 @@
 		.dataTables_info {
 			display: none !important;
 		}
+
+		#timelineDataTable textarea.form-control {
+			display: none;
+		}
+		.textarea-content {
+			border: none;
+			/*display: block;*/
+			min-height: 0;
+			padding: 0;
+		}
 	}
 </style>
 <script>
@@ -76,13 +101,54 @@ function findUserTimeLog(o){
 	}
 }
 var updateLogs=[];function saveFlagUpdate(a){if(jQuery.inArray(a,updateLogs)=="-1"){updateLogs.push(a);updateLogData(a)}else{updateLogData(a)}}function updateLogData(a){_aH=jQuery("#actualHrs"+a).val();_c=jQuery("#comment"+a).val();jQuery.ajax({url:"<?php echo $Layout->baseUrl;?>users/updateLogHr",type:"POST",data:{i:a,ah:_aH,c:_c},cache:false,success:function(b){if(b!="0"){jQuery("#"+a).find("td").eq(6).html(b)}}})}
-jQuery(document).ready(function(){window.parent.jQuery("#user_mobile_number").val('<?php echo $userData->phone_number?>')})
+
+
+
+window.resizeDataTable = function(height) {
+	jQuery('#timelineDataTable_wrapper .dataTables_scrollBody').height(height - 80);
+}
+
+jQuery(document).ready(function(){
+	window.parent.myProfileResize();
+
+	window.parent.jQuery("#user_mobile_number").val('<?php echo $userData->phone_number?>')
+
+	jQuery('#timelineDataTable textarea.form-control').each(function(index, textarea) {
+		checkTexareaHeight(jQuery(textarea));
+	});
+	jQuery('#timelineDataTable textarea.form-control').on('keyup blur', function() {
+		var $this = jQuery(this),
+			$textareaContent = $this.next();
+
+		if($textareaContent.length && $textareaContent.hasClass('textarea-content')) {
+			$textareaContent.html($this.val().replace(/\n/g, '<br>'));
+		}
+
+		checkTexareaHeight($this);
+	});
+
+
+	function checkTexareaHeight($textarea) {
+		// var lines = $textarea.val().split('\n'),
+		// 	height = 25;
+
+		// if(lines.length) {
+		// 	height = 8 + lines.length * 18;
+		// }
+		var $textareaContent = $textarea.next();
+
+		if($textareaContent.length && $textareaContent.hasClass('textarea-content')) {
+			$textarea.outerHeight($textareaContent.outerHeight());
+		}
+
+	}
+});
 </script>
 
 
 <div class="col-xs-12">
 
- <div class="timeline-wrapper col-lg-12"  id='timeLineWrapper'> <div class="row"> <div class="col-lg-12"> <div> <b><big>Time Flow</big></b> </div> <div class="timeline-wrapper-inner" style='height:500px;width:80%;float:left'> 
+ <div class="timeline-wrapper col-lg-12"  id='timeLineWrapper'> <div class="row"> <div class="col-lg-12"> <div> <b><big>Time Flow</big></b> </div> <div class="timeline-wrapper-inner" style='height:440px;width:80%;float:left'> 
  <?php 
 	$getMyLogTime = getMyLogTime($user_id,$from,$to);
 	echo form_open_multipart('users/profile',array('class'=>'form-horizontal','role'=>'form','id'=>'frmUserTimeLog'));
@@ -228,7 +294,13 @@ jQuery(document).ready(function(){window.parent.jQuery("#user_mobile_number").va
 													echo $totalHrs;
 												?> </td>
 												
-									<td style='width:430px'><textarea class='form-control' onchange="saveFlagUpdate(<?php echo $getMyLogTime['all_work'][$i]->id;?>)" placeholder="Comment" name="comment<?php echo $getMyLogTime['all_work'][$i]->id;?>" id="comment<?php echo $getMyLogTime['all_work'][$i]->id;?>" style='width:400px;width:100%;height:25px;border:0px'><?php echo $getMyLogTime['all_work'][$i]->comment?></textarea></td> </tr> <?php
+									<td style='width:430px'>
+										<div class="textarea-wrapper">
+											<textarea class='form-control' onchange="saveFlagUpdate(<?php echo $getMyLogTime['all_work'][$i]->id;?>)" placeholder="Comment" name="comment<?php echo $getMyLogTime['all_work'][$i]->id;?>" id="comment<?php echo $getMyLogTime['all_work'][$i]->id;?>"><?php echo $getMyLogTime['all_work'][$i]->comment?></textarea>
+											<div class="textarea-content"><?php echo str_replace("\n", '<br>', $getMyLogTime['all_work'][$i]->comment);?></div>
+										</div>
+									</td>
+								</tr> <?php
 										}
 									?> </tbody> </table> 
 <script>

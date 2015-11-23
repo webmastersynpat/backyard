@@ -410,6 +410,13 @@ function enterData(t,ID){
 									__message += "<br/><hr/>FROM: "+_pa.userName+"<br/>"+_pa.message;
 								}
 							}
+							if(_data.emailID>0){
+								jQuery("#emailMain").css('display','');
+								jQuery("#emailLink").html('<a href="javascript://" onclick="findOwnThread('+_data.emailID+',jQuery(this),5);">Email</a>');
+							} else {
+								jQuery("#emailLink").html('');
+								jQuery("#emailMain").css('display','none');
+							}
 							jQuery("#ticket__body p").html(__message);
 							_executionDate = "";
 							if(_data.executionDate!=null && _data.executionDate!='0000-00-00'){

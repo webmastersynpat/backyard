@@ -184,9 +184,154 @@
 						if($openEmailBox===true):
 					?>jQuery("#myEmailsRetrieve").html("<div class='col-xs-12'><a class='btn btn-default' href='javascript://' onclick='retrieveMyEmail();'>Retry</a></div>");<?php endif;?>}else{<?php 
 						if($this->session->userdata['initialise_email']=='0'):
-					?>runRetrieveNew();<?php endif;?>setInterval(runRetrieveNew,300000)}totalCC=jQuery("#myEmailsRetrieve").find("table").find("tbody").find("tr.mainLead").length;jQuery(".pager-text").html("0/"+totalCC);windowResize()},error:function(a,c,b){if(a.status=="504"){retrieveMyEmail()}}}).done(function(){_initLead="<?php echo $this->uri->segment(3)?>";if(parseInt(_initLead)>0){activateLead(parseInt(_initLead))}})}function checkBodyScrollable(){}jQuery(document).ready(function(){jQuery("#activity-btn").click(function(a){a.preventDefault();jQuery("#activity").toggle();jQuery("#contentPart").removeClass("col-md-8").removeClass("col-sm-8").removeClass("col-xs-8");jQuery("#contentPart").removeClass("col-md-12").removeClass("col-sm-12").removeClass("col-xs-12");jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");if(jQuery("#task_list").css("display")=="block"||jQuery("#task_list").css("display")==="undefined"){if(jQuery("#activity").css("display")=="none"){jQuery.cookie("ryt_sidebar_hide","true");jQuery.cookie("ryt_sidebar_show","");jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")}else{jQuery.cookie("ryt_sidebar_hide","");jQuery.cookie("ryt_sidebar_show","true");jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");jQuery("#contentPart").addClass("col-md-8").addClass("col-sm-8").addClass("col-xs-8")}}else{if(jQuery("#activity").css("display")=="none"){jQuery.cookie("ryt_sidebar_hide","true");jQuery.cookie("ryt_sidebar_show","");jQuery("#contentPart").addClass("col-md-12").addClass("col-sm-12").addClass("col-xs-12")}else{jQuery.cookie("ryt_sidebar_hide","");jQuery.cookie("ryt_sidebar_show","true");jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")}}});jQuery("#task-btn").click(function(a){a.preventDefault();jQuery("#my_c_task_list").css("display","none");jQuery("#task_list").toggle();jQuery("#contentPart").removeClass("col-md-8").removeClass("col-sm-8").removeClass("col-xs-8");jQuery("#contentPart").removeClass("col-md-12").removeClass("col-sm-12").removeClass("col-xs-12");jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");if(jQuery("#activity").css("display")=="block"||jQuery("#activity").css("display")==="undefined"){if(jQuery("#task_list").css("display")=="none"){jQuery.cookie("left_sidebar_hide","true");jQuery.cookie("left_sidebar_show","");jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")}else{jQuery.cookie("left_sidebar_hide","");jQuery.cookie("left_sidebar_show","true");jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");jQuery("#contentPart").addClass("col-md-8").addClass("col-sm-8").addClass("col-xs-8")}}else{if(jQuery("#task_list").css("display")=="none"){jQuery.cookie("left_sidebar_hide","true");jQuery.cookie("left_sidebar_show","");jQuery("#contentPart").addClass("col-md-12").addClass("col-sm-12").addClass("col-xs-12")}else{jQuery.cookie("left_sidebar_hide","");jQuery.cookie("left_sidebar_show","true");jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")}}});
-					jQuery("#task-i-btn").click(function(a){a.preventDefault();jQuery("#task_list").css("display","none");jQuery("#my_c_task_list").toggle();jQuery("#contentPart").removeClass("col-md-8").removeClass("col-sm-8").removeClass("col-xs-8");jQuery("#contentPart").removeClass("col-md-12").removeClass("col-sm-12").removeClass("col-xs-12");jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");if(jQuery("#activity").css("display")=="block"||jQuery("#activity").css("display")==="undefined"){if(jQuery("#my_c_task_list").css("display")=="none"){jQuery.cookie("left_sidebar_hide","true");jQuery.cookie("left_sidebar_show","");jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")}else{jQuery.cookie("left_sidebar_hide","");jQuery.cookie("left_sidebar_show","true");jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");jQuery("#contentPart").addClass("col-md-8").addClass("col-sm-8").addClass("col-xs-8")}}else{if(jQuery("#my_c_task_list").css("display")=="none"){jQuery.cookie("left_sidebar_hide","true");jQuery.cookie("left_sidebar_show","");jQuery("#contentPart").addClass("col-md-12").addClass("col-sm-12").addClass("col-xs-12")}else{jQuery.cookie("left_sidebar_hide","");jQuery.cookie("left_sidebar_show","true");jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")}}});_formOpen='';jQuery("#btnFormCollapse").click(function(a){if(_formOpen==''){if(jQuery('#from_regular').is(':visible')){_formOpen='from_regular';jQuery('#from_regular').slideUp();} else if(jQuery('#from_litigation').is(':visible')){_formOpen='from_litigation';jQuery('#from_litigation').slideUp();} else if(jQuery('#from_nonacquistion').is(':visible')){_formOpen='from_nonacquistion';jQuery('#from_nonacquistion').slideUp();}} else {jQuery('#'+_formOpen).slideDown();_formOpen='';}});
-					jQuery("#btnEmail").click(function(a){if(!jQuery("#myEmailsRetrieve").is(":visible")){jQuery("#myEmailsRetrieve").slideDown(function(){jQuery.cookie("show_default_email",true);windowResize();jQuery("#all_type_list_wrapper .sorting:first").trigger("click");setTimeout(function(){jQuery("#all_type_list_wrapper .sorting:first").trigger("click")},300);checkBodyScrollable()});if(jQuery("#myEmailsRetrieve").find("div").length==0){retrieveMyEmail()}}else{jQuery("#myEmailsRetrieve").slideUp(function(){jQuery.cookie("show_default_email","");windowResize()})}return false});if(jQuery.cookie("ryt_sidebar_hide")=="true"){jQuery("div#activity.col-md-2.col-sm-2.col-xs-2").css("display","none");jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");jQuery("#contentPart").removeClass("col-md-12").removeClass("col-sm-12").removeClass("col-xs-12");jQuery("#contentPart").removeClass("col-md-8").removeClass("col-sm-8").removeClass("col-xs-8");jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")}if(jQuery.cookie("ryt_sidebar_show")=="true"){jQuery("div#activity.col-md-2.col-sm-2.col-xs-2").css("display","block");jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");jQuery("#contentPart").addClass("col-md-8").addClass("col-sm-8").addClass("col-xs-8")}if(jQuery.cookie("left_sidebar_hide")=="true"){jQuery("#task_list").css("display","none");jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")}if(jQuery.cookie("left_sidebar_show")=="true"){jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");jQuery("#contentPart").removeClass("col-md-12").removeClass("col-sm-12").removeClass("col-xs-12");jQuery("#contentPart").removeClass("col-md-8").removeClass("col-sm-8").removeClass("col-xs-8");jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")}if(jQuery.cookie("left_sidebar_hide")=="true"&&jQuery.cookie("ryt_sidebar_hide")=="true"){jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");jQuery("#contentPart").addClass("col-md-8").addClass("col-sm-8").addClass("col-xs-8");jQuery("#contentPart").addClass("col-md-12").addClass("col-sm-12").addClass("col-xs-12")}if(jQuery.cookie("left_sidebar_show")=="true"&&jQuery.cookie("ryt_sidebar_show")=="true"){jQuery("#task_list").css("display","block");jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");jQuery("#contentPart").removeClass("col-md-12").removeClass("col-sm-12").addClass("col-xs-12");jQuery("#contentPart").addClass("col-md-8").addClass("col-sm-8").addClass("col-xs-8")}jQuery("[data-toggle=dropdown]").dropdown()});function intialiseAfter(){jQuery.ajax({url:__baseUrl+"dashboard/intialiseAfter",type:"POST",data:{inta:1},cache:false,success:function(a){}})}function sendCurrentOldLeadLL(a){_globalAjax= jQuery.ajax({type:"POST",url:__baseUrl+"users/getCurrentOldEmails",data:{stype:a},cache:false,success:function(b){if(b!=""){_dataEmail=jQuery.parseJSON(b);if(_dataEmail.emails.length>0){___HTML="";jQuery('#loading_spinner_heading_messages').css('display','none');for(i=0;i<_dataEmail.emails.length;i++){_mainFlag=0;_innerFlag=1;jQuery("#mCSB_116").find("div.messages_container").find("div.message-item").each(function(){if(jQuery(this).attr("data-id")==_dataEmail.emails[i].message_id){_innerFlag=0}});if(_innerFlag==1){if(_mainFlag==0){___from="";___subject="";___date="";_dtEm='';___messageIDDD="";for(h=0;h<_dataEmail.emails[i].header.length;h++){____header=_dataEmail.emails[i].header[h];if(____header.name=="From"){___from=____header.value}if(____header.name=="Subject"){___subject=____header.value}if(____header.name=="Date"){_dtEm=____header.value;___date=moment(new Date(____header.value)).format("MMM D, YYYY")}if(____header.name=="Message-ID"){___messageIDDD=____header.value}}___attachments=0;if(_dataEmail.emails[i].parts.length>0){if(_dataEmail.emails[i].parts[0].mimeType=="multipart/alternative"||_dataEmail.emails[i].parts[0].mimeType=="multipart/related"){for(p=1;p<_dataEmail.emails[i].parts.length;p++){if(_dataEmail.emails[i].parts[p].filename!=""){___attachments++}}}}_eBT=1;if(jQuery("#mCSB_116").find("div.messages_container").find("div.message-item").length>0){dt = new Date(jQuery("#mCSB_116").find("div.messages_container").find("div.message-item").eq(0).attr('data-date'));if(new Date(_dtEm)>dt){_eBT=0;}}else{_eBT=0;} if(_eBT==0){___HTML+='<div class="message-item media draggable" data-id="'+_dataEmail.emails[i].message_id+'" data-message-id="'+___messageIDDD+'" data-date="'+_dtEm+'"><div class="message-item-right"><div class="media"><div class="media-body" onclick="findThread(\''+_dataEmail.emails[i].message_id+'\',jQuery(this));"><h5 class="c-dark">';___FF=0;if(_dataEmail.emails[i].labelIds.length>0){for(l=0;l<_dataEmail.emails[i].labelIds.length;l++){if(_dataEmail.emails[i].labelIds[l]=="UNREAD"){___FF=1}}}if(___FF==1){___HTML+='<strong><a class="c-dark" href="javascript:void(0)">'+___from+"</a></strong>"}else{___HTML+='<a class="c-dark" style="font-weight:normal" href="javascript:void(0)">'+___from+"</a>"}___HTML+='</h5><h4 class="c-dark">'+___subject+"</h4><div><span class='message-item-date'>"+___date+"</span>&nbsp;";if(___attachments>0){___HTML+='<strong><i class="glyph-icon icon-paperclip"></i>'+___attachments+"</strong>"}___HTML+="</div></div></div></div></div>"}}}}if(___HTML!=""){if(jQuery("#mCSB_116").find("div.messages_container").find("div.message-item").length>0){jQuery("#mCSB_116").find("div.messages_container").find("div.message-item").eq(0).before(___HTML)}else{jQuery("#mCSB_116").find("div.messages_container").append(___HTML)}initDragDrop()}}}}})}_globalAjax="";window.onbeforeunload=function(a){if(typeof typeof _globalAjax=='object'){_globalAjax.abort();return null}else{return null}}; function checkPageRefresh(){_cWI = window.location.href;if(_cWI.indexOf('dashboard')>=0){leadGlobal=0;leadNameGlobal='';__dashFlag=true;jQuery('#all_type_list').find('tbody>tr').removeClass('active');jQuery('.DTFC_Cloned').find('tbody>tr').removeClass('active');jQuery("#mCSB_116").find('div').removeClass('message-active');jQuery("#other_list_boxes").empty();jQuery("#displayEmail").empty();jQuery("#sales_acititity").removeClass("show").addClass("hide");jQuery(".openPatentDetail").removeClass('show').addClass('hide');jQuery('#from_regular').css('display','none');jQuery('#from_litigation').css('display','none');jQuery('#from_nonacquistion').css('display','none');jQuery('#search_form').get(0).reset();jQuery('#search_results').empty();jQuery('#search_lead_box').css('display','block');callnotification();} else{window.location = __baseUrl}}_allEmails = ['INBOX','STARRED','DRAFT','SENT','TRASH','LEAD'];_allLists = ['Inbox','Starred','Draft','Sent','Trash','Leads'];function runRetrieveNew(){callAjax(0)};function callAjax(t){_globalAjax=jQuery.ajax({type:"POST",url:__baseUrl+"users/getEmails",data:{type:_allEmails[t]},cache:false,success:function(a){if(t==0){if(jQuery(".emails-group-container").find("a.active").length>0&&jQuery.trim(jQuery(".emails-group-container").find("a.active").html())==_allLists[t]){sendCurrentOldLeadLL(_allEmails[0]);} else if(jQuery(".emails-group-container").find("a.active").length>0&&jQuery.trim(jQuery(".emails-group-container").find("a.active").html())=="Retreive"){sendCurrentOldLeadLL(_allEmails[0]);}}},error:function(c,a,b){if(t==0){sendCurrentOldLeadLL(_allEmails[0]);}}}).fail(function(){_globalAjax=jQuery.ajax({type:"POST",url:__baseUrl+"users/notificationEmail",data:{type:"INBOX"},cache:false,success:function(){}});}).done(function(){m = t+ 1;if(m<_allLists.length){callAjax(m);}});
+					?>runRetrieveNew();<?php endif;?>setInterval(runRetrieveNew,300000)}totalCC=jQuery("#myEmailsRetrieve").find("table").find("tbody").find("tr.mainLead").length;jQuery(".pager-text").html("0/"+totalCC);windowResize()},error:function(a,c,b){if(a.status=="504"){retrieveMyEmail()}}}).done(function(){_initLead="<?php echo $this->uri->segment(3)?>";if(parseInt(_initLead)>0){activateLead(parseInt(_initLead))}})}function checkBodyScrollable(){}
+
+			jQuery(document).ready(function(){
+				jQuery("#activity-btn").click(function(a){
+					a.preventDefault();
+					jQuery("#activity").toggle();
+					jQuery("#contentPart").removeClass("col-md-8").removeClass("col-sm-8").removeClass("col-xs-8");
+					jQuery("#contentPart").removeClass("col-md-12").removeClass("col-sm-12").removeClass("col-xs-12");
+					jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");
+
+					if(jQuery("#task_list").css("display")=="block"||jQuery("#task_list").css("display")==="undefined") {
+						if(jQuery("#activity").css("display")=="none") {
+							jQuery.cookie("ryt_sidebar_hide","true");
+							jQuery.cookie("ryt_sidebar_show","");
+							jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")
+						}
+						else {
+							jQuery.cookie("ryt_sidebar_hide","");
+							jQuery.cookie("ryt_sidebar_show","true");
+							jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");
+							jQuery("#contentPart").addClass("col-md-8").addClass("col-sm-8").addClass("col-xs-8")
+						}
+					}
+					else {
+						if(jQuery("#activity").css("display")=="none") {
+							jQuery.cookie("ryt_sidebar_hide","true");
+							jQuery.cookie("ryt_sidebar_show","");
+							jQuery("#contentPart").addClass("col-md-12").addClass("col-sm-12").addClass("col-xs-12")
+						}
+						else {
+							jQuery.cookie("ryt_sidebar_hide","");
+							jQuery.cookie("ryt_sidebar_show","true");
+							jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")
+						}
+					}
+
+					rowWidth();
+    				inputStringFieldsWidth();
+				});
+
+				jQuery("#task-btn").click(function(a){
+					a.preventDefault();
+					jQuery("#my_c_task_list").css("display","none");
+					jQuery("#task_list").toggle();
+					jQuery("#contentPart").removeClass("col-md-8").removeClass("col-sm-8").removeClass("col-xs-8");
+					jQuery("#contentPart").removeClass("col-md-12").removeClass("col-sm-12").removeClass("col-xs-12");
+					jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");
+
+					if(jQuery("#activity").css("display")=="block"||jQuery("#activity").css("display")==="undefined") {
+						if(jQuery("#task_list").css("display")=="none") {
+							jQuery.cookie("left_sidebar_hide","true");
+							jQuery.cookie("left_sidebar_show","");
+							jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")
+						}
+						else {
+							jQuery.cookie("left_sidebar_hide","");
+							jQuery.cookie("left_sidebar_show","true");
+							jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");
+							jQuery("#contentPart").addClass("col-md-8").addClass("col-sm-8").addClass("col-xs-8")
+						}
+					}
+					else {
+						if(jQuery("#task_list").css("display")=="none") {
+							jQuery.cookie("left_sidebar_hide","true");
+							jQuery.cookie("left_sidebar_show","");
+							jQuery("#contentPart").addClass("col-md-12").addClass("col-sm-12").addClass("col-xs-12")
+						}
+						else {
+							jQuery.cookie("left_sidebar_hide","");
+							jQuery.cookie("left_sidebar_show","true");
+							jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")
+						}
+					}
+
+					rowWidth();
+    				inputStringFieldsWidth();
+				});
+
+				jQuery("#task-i-btn").click(function(a){
+					a.preventDefault();
+					jQuery("#task_list").css("display","none");
+					jQuery("#my_c_task_list").toggle();
+					jQuery("#contentPart").removeClass("col-md-8").removeClass("col-sm-8").removeClass("col-xs-8");
+					jQuery("#contentPart").removeClass("col-md-12").removeClass("col-sm-12").removeClass("col-xs-12");
+					jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");
+
+					if(jQuery("#activity").css("display")=="block"||jQuery("#activity").css("display")==="undefined") {
+						if(jQuery("#my_c_task_list").css("display")=="none") {
+							jQuery.cookie("left_sidebar_hide","true");
+							jQuery.cookie("left_sidebar_show","");
+							jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")
+						}
+						else {
+							jQuery.cookie("left_sidebar_hide","");
+							jQuery.cookie("left_sidebar_show","true");
+							jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");
+							jQuery("#contentPart").addClass("col-md-8").addClass("col-sm-8").addClass("col-xs-8")
+						}
+					}
+					else {
+						if(jQuery("#my_c_task_list").css("display")=="none") {
+							jQuery.cookie("left_sidebar_hide","true");
+							jQuery.cookie("left_sidebar_show","");
+							jQuery("#contentPart").addClass("col-md-12").addClass("col-sm-12").addClass("col-xs-12")
+						}
+						else {
+							jQuery.cookie("left_sidebar_hide","");
+							jQuery.cookie("left_sidebar_show","true");
+							jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")
+						}
+					}
+
+					rowWidth();
+    				inputStringFieldsWidth();
+				});
+
+				_formOpen='';jQuery("#btnFormCollapse").click(function(a){if(_formOpen==''){if(jQuery('#from_regular').is(':visible')){_formOpen='from_regular';jQuery('#from_regular').slideUp();} else if(jQuery('#from_litigation').is(':visible')){_formOpen='from_litigation';jQuery('#from_litigation').slideUp();} else if(jQuery('#from_nonacquistion').is(':visible')){_formOpen='from_nonacquistion';jQuery('#from_nonacquistion').slideUp();}} else {jQuery('#'+_formOpen).slideDown();_formOpen='';}});
+					jQuery("#btnEmail").click(function(a){if(!jQuery("#myEmailsRetrieve").is(":visible")){jQuery("#myEmailsRetrieve").slideDown(function(){jQuery.cookie("show_default_email",true);windowResize();jQuery("#all_type_list_wrapper .sorting:first").trigger("click");setTimeout(function(){jQuery("#all_type_list_wrapper .sorting:first").trigger("click")},300);checkBodyScrollable()});if(jQuery("#myEmailsRetrieve").find("div").length==0){retrieveMyEmail()}}else{jQuery("#myEmailsRetrieve").slideUp(function(){jQuery.cookie("show_default_email","");windowResize()})}return false});if(jQuery.cookie("ryt_sidebar_hide")=="true"){jQuery("div#activity.col-md-2.col-sm-2.col-xs-2").css("display","none");jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");jQuery("#contentPart").removeClass("col-md-12").removeClass("col-sm-12").removeClass("col-xs-12");jQuery("#contentPart").removeClass("col-md-8").removeClass("col-sm-8").removeClass("col-xs-8");jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")}if(jQuery.cookie("ryt_sidebar_show")=="true"){jQuery("div#activity.col-md-2.col-sm-2.col-xs-2").css("display","block");jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");jQuery("#contentPart").addClass("col-md-8").addClass("col-sm-8").addClass("col-xs-8")}if(jQuery.cookie("left_sidebar_hide")=="true"){jQuery("#task_list").css("display","none");jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")}if(jQuery.cookie("left_sidebar_show")=="true"){jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");jQuery("#contentPart").removeClass("col-md-12").removeClass("col-sm-12").removeClass("col-xs-12");jQuery("#contentPart").removeClass("col-md-8").removeClass("col-sm-8").removeClass("col-xs-8");jQuery("#contentPart").addClass("col-md-10").addClass("col-sm-10").addClass("col-xs-10")}if(jQuery.cookie("left_sidebar_hide")=="true"&&jQuery.cookie("ryt_sidebar_hide")=="true"){jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");jQuery("#contentPart").addClass("col-md-8").addClass("col-sm-8").addClass("col-xs-8");jQuery("#contentPart").addClass("col-md-12").addClass("col-sm-12").addClass("col-xs-12")}if(jQuery.cookie("left_sidebar_show")=="true"&&jQuery.cookie("ryt_sidebar_show")=="true"){jQuery("#task_list").css("display","block");jQuery("#contentPart").removeClass("col-md-10").removeClass("col-sm-10").removeClass("col-xs-10");jQuery("#contentPart").removeClass("col-md-12").removeClass("col-sm-12").addClass("col-xs-12");jQuery("#contentPart").addClass("col-md-8").addClass("col-sm-8").addClass("col-xs-8")}jQuery("[data-toggle=dropdown]").dropdown()});function intialiseAfter(){jQuery.ajax({url:__baseUrl+"dashboard/intialiseAfter",type:"POST",data:{inta:1},cache:false,success:function(a){}})}function sendCurrentOldLeadLL(a){_globalAjax= jQuery.ajax({type:"POST",url:__baseUrl+"users/getCurrentOldEmails",data:{stype:a},cache:false,success:function(b){if(b!=""){_dataEmail=jQuery.parseJSON(b);if(_dataEmail.emails.length>0){___HTML="";jQuery('#loading_spinner_heading_messages').css('display','none');for(i=0;i<_dataEmail.emails.length;i++){_mainFlag=0;_innerFlag=1;jQuery("#mCSB_116").find("div.messages_container").find("div.message-item").each(function(){if(jQuery(this).attr("data-id")==_dataEmail.emails[i].message_id){_innerFlag=0}});if(_innerFlag==1){if(_mainFlag==0){___from="";___subject="";___date="";_dtEm='';___messageIDDD="";for(h=0;h<_dataEmail.emails[i].header.length;h++){____header=_dataEmail.emails[i].header[h];if(____header.name=="From"){___from=____header.value}if(____header.name=="Subject"){___subject=____header.value}if(____header.name=="Date"){_dtEm=____header.value;___date=moment(new Date(____header.value)).format("MMM D, YYYY")}if(____header.name=="Message-ID"){___messageIDDD=____header.value}}___attachments=0;if(_dataEmail.emails[i].parts.length>0){if(_dataEmail.emails[i].parts[0].mimeType=="multipart/alternative"||_dataEmail.emails[i].parts[0].mimeType=="multipart/related"){for(p=1;p<_dataEmail.emails[i].parts.length;p++){if(_dataEmail.emails[i].parts[p].filename!=""){___attachments++}}}}_eBT=1;if(jQuery("#mCSB_116").find("div.messages_container").find("div.message-item").length>0){dt = new Date(jQuery("#mCSB_116").find("div.messages_container").find("div.message-item").eq(0).attr('data-date'));if(new Date(_dtEm)>dt){_eBT=0;}}else{_eBT=0;} if(_eBT==0){___HTML+='<div class="message-item media draggable" data-id="'+_dataEmail.emails[i].message_id+'" data-message-id="'+___messageIDDD+'" data-date="'+_dtEm+'"><div class="message-item-right"><div class="media"><div class="media-body" onclick="findThread(\''+_dataEmail.emails[i].message_id+'\',jQuery(this));"><h5 class="c-dark">';___FF=0;if(_dataEmail.emails[i].labelIds.length>0){for(l=0;l<_dataEmail.emails[i].labelIds.length;l++){if(_dataEmail.emails[i].labelIds[l]=="UNREAD"){___FF=1}}}if(___FF==1){___HTML+='<strong><a class="c-dark" href="javascript:void(0)">'+___from+"</a></strong>"}else{___HTML+='<a class="c-dark" style="font-weight:normal" href="javascript:void(0)">'+___from+"</a>"}___HTML+='</h5><h4 class="c-dark">'+___subject+"</h4><div><span class='message-item-date'>"+___date+"</span>&nbsp;";if(___attachments>0){___HTML+='<strong><i class="glyph-icon icon-paperclip"></i>'+___attachments+"</strong>"}___HTML+="</div></div></div></div></div>"}}}}if(___HTML!=""){if(jQuery("#mCSB_116").find("div.messages_container").find("div.message-item").length>0){jQuery("#mCSB_116").find("div.messages_container").find("div.message-item").eq(0).before(___HTML)}else{jQuery("#mCSB_116").find("div.messages_container").append(___HTML)}initDragDrop()}}}}})}_globalAjax="";window.onbeforeunload=function(a){if(typeof typeof _globalAjax=='object'){_globalAjax.abort();return null}else{return null}}; 
+function checkPageRefresh(){
+	_cWI = window.location.href;
+	if(_cWI.indexOf('dashboard')>=0){
+		leadGlobal=0;
+		leadNameGlobal='';
+		__dashFlag=true;
+		jQuery('#all_type_list').find('tbody>tr').removeClass('active');
+		jQuery('.DTFC_Cloned').find('tbody>tr').removeClass('active');
+		jQuery("#mCSB_116").find('div').removeClass('message-active');
+		jQuery("#other_list_boxes").empty();
+		jQuery("#displayEmail").empty();
+		jQuery("#sales_acititity").removeClass("show").addClass("hide");
+		jQuery(".openPatentDetail").removeClass('show').addClass('hide');
+		jQuery('#from_regular').css('display','none');
+		jQuery('#from_litigation').css('display','none');
+		jQuery('#from_nonacquistion').css('display','none');
+		jQuery('#search_form').get(0).reset();
+		jQuery('#search_results').empty();
+		jQuery('#search_lead_box').css('display','block');
+		callnotification();
+	} 
+	else{
+		window.location = __baseUrl
+	}
+
+	rowWidth();
+	inputStringFieldsWidth();
+}
+
+	_allEmails = ['INBOX','STARRED','DRAFT','SENT','TRASH','LEAD'];_allLists = ['Inbox','Starred','Draft','Sent','Trash','Leads'];function runRetrieveNew(){callAjax(0)};function callAjax(t){_globalAjax=jQuery.ajax({type:"POST",url:__baseUrl+"users/getEmails",data:{type:_allEmails[t]},cache:false,success:function(a){if(t==0){if(jQuery(".emails-group-container").find("a.active").length>0&&jQuery.trim(jQuery(".emails-group-container").find("a.active").html())==_allLists[t]){sendCurrentOldLeadLL(_allEmails[0]);} else if(jQuery(".emails-group-container").find("a.active").length>0&&jQuery.trim(jQuery(".emails-group-container").find("a.active").html())=="Retreive"){sendCurrentOldLeadLL(_allEmails[0]);}}},error:function(c,a,b){if(t==0){sendCurrentOldLeadLL(_allEmails[0]);}}}).fail(function(){_globalAjax=jQuery.ajax({type:"POST",url:__baseUrl+"users/notificationEmail",data:{type:"INBOX"},cache:false,success:function(){}});}).done(function(){m = t+ 1;if(m<_allLists.length){callAjax(m);}});
 } </script>
 </head>
 <input type="hidden" name="status" value=""/>
@@ -272,6 +417,19 @@
 </div>
 </div>
 </div>
+
+<div id="docket_slidebar" class="sb-slidebar bg-white sb-right sb-style-overlay" style="width: 1470px;right:-1470px;">
+	<div class="sb-slidebar-top-buttons">
+		<a href='javascript:void(0)' class="btn" onclick="closeDocketSlidebar()"><i class="glyph-icon icon-close"></i></a>
+		<a href='javascript:void(0)' class="btn nm" onclick="changeSlidebarSide(jQuery(this))"><i class="glyph-icon icon-exchange"></i></a>
+	</div>
+	<div class="scrollable-content scrollable-slim-sidebar">
+		<div class="pad15A">
+			<div id="docket_slidebar_iframe_wrapper"></div>
+		</div>
+	</div>
+</div>
+
 <div id="advanced_search" class="sb-slidebar bg-white sb-left sb-style-overlay">
 	<div class="sb-slidebar-top-buttons">
 		<a href='javascript:void(0)' class="btn" onclick="closeAdvancedSearch()" style='float:right'><i class="glyph-icon icon-close"></i></a>
@@ -445,7 +603,7 @@
 	</div>
 <div class="scrollable-content scrollable-slim-sidebar">
 <div class="pad15A">
-<form class="form-horizontal form-flat" id="frm_calendar_event">
+<form class="form-horizontal form-flat" id="frm_calendar_event" style="height: 100px; overflow-x: hidden; overflow-y: auto;">
 <div class="row">
 <div class="col-xs-12">
 <input type="text" name="event[summary]" id="eventSummary" required class="form-control input-string" placeholder="Untitled event">
@@ -501,6 +659,7 @@
 <div class="clear"></div>
 <div class="mrg10T">
 <input type="hidden" name="lead_id" id="lead_id" value="0"/>
+<input type="hidden" name="acitivity_event_type" id="acitivity_event_type" value="0"/>
 <button type="button" onclick="insertEvent()" id="btnEvent" class="btn btn-primary btn-mwidth pull-right">Send</button>
 <button type="button" onclick="refreshContacts()" class="btn btn-primary btn-mwidth pull-right mrg20R">Refresh Contacts</button>
 <a href="javascript://" class="mrg10R pull-right" onclick="close_all_invitation()" style="color:#222;font-size:20px;margin-top:2px"><i class="glyph-icon"><img src="<?php echo $Layout->baseUrl;?>public/images/discard.png" style="opacity:0.55"></i></a>

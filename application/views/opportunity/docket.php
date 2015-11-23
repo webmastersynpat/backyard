@@ -1074,7 +1074,7 @@ foreach($timeline as $key => $val)
 		<div class="modal-content">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-				<h4 class="modal-title" id="">Due Dilligence Accordion Text</h4>				
+				<h4 class="modal-title" id="">Scope Accordion Text</h4>				
 			</div>
 			<div class="modal-body"> 			   
 				<div class="row">
@@ -1104,7 +1104,7 @@ foreach($timeline as $key => $val)
 		<div class="modal-content">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-				<h4 class="modal-title" id="">Report Accordion Text</h4>				
+				<h4 class="modal-title" id="">Quality Accordion Text</h4>				
 			</div>
 			<div class="modal-body"> 			   
 				<div class="row">
@@ -1121,37 +1121,7 @@ foreach($timeline as $key => $val)
 						?>
 						<textarea class='wysiwyg-editor' name='claim_chart_tab' id='claim_chart_tab'><?php echo $claim_chart_tab;?></textarea>
 					</div>
-				</div>
-				<div class="row">
-					<div class="col-lg-12">
-					<label class="col-lg-12 control-label mrg10T mrg10B">Prior Art Accordion Text</label>
-						
-						<?php 
-							$prior_art_tab = "";
-							if(count($acordion_text)>0){
-								if(isset($acordion_text->License->prior_art_tab)){
-									$prior_art_tab = $acordion_text->License->prior_art_tab;
-								}
-							}
-						?>
-						<textarea class='wysiwyg-editor' name='prior_art_tab' id='prior_art_tab'><?php echo $prior_art_tab;?></textarea>
-					</div>
-				</div> 
-				<div class="row">
-				<label class="col-lg-12 control-label mrg10T mrg10B">Damages Accordion Text</label>
-					<div class="col-lg-12">
-					
-						<?php 
-							$damage_tab = "";
-							if(count($acordion_text)>0){
-								if(isset($acordion_text->License->damage_tab)){
-									$damage_tab = $acordion_text->License->damage_tab;
-								}
-							}
-						?>
-						<textarea class='wysiwyg-editor' name='damage_tab' id='damage_tab'><?php echo $damage_tab;?></textarea>
-					</div>
-				</div> 
+				</div>				
 			   <div class="clearfix"></div>
 			</div>
 			<div class="modal-footer">
@@ -1232,7 +1202,7 @@ break;case 2:$text=jQuery("#syndication_tab").code();if($text!=""){jQuery.ajax({
 break;case 3:$text=jQuery("#simulator_text").code();if($text!=""){jQuery.ajax({type:'POST',url:"<?php echo $Layout->baseUrl?>opportunity/save_accordion_text",data:{lead_id:leadGlobal,simulator_text:$text},cache:false,success:function(){jQuery("#simulatorModal").modal("hide");}})}
 break;case 4:$text=jQuery("#document_text").code();if($text!=""){jQuery.ajax({type:'POST',url:"<?php echo $Layout->baseUrl?>opportunity/save_accordion_text",data:{lead_id:leadGlobal,document_text:$text},cache:false,success:function(){jQuery("#documentsModal").modal("hide");}})}
 break;case 5:$text=jQuery("#due_diligence_tab").code();if($text!=""){jQuery.ajax({type:'POST',url:"<?php echo $Layout->baseUrl?>opportunity/save_accordion_text",data:{lead_id:leadGlobal,due_diligence_tab:$text},cache:false,success:function(){jQuery("#scopeModal").modal("hide");}})}
-break;case 6:$text=jQuery("#claim_chart_tab").code();if($text!=""){jQuery.ajax({type:'POST',url:"<?php echo $Layout->baseUrl?>opportunity/save_accordion_text",data:{lead_id:leadGlobal,claim_chart_tab:$text,prior_art_tab:jQuery("#prior_art_tab").code(),damage_tab:jQuery("#damage_tab").code()},cache:false,success:function(){jQuery("#qualityModal").modal("hide");}})}
+break;case 6:$text=jQuery("#claim_chart_tab").code();if($text!=""){jQuery.ajax({type:'POST',url:"<?php echo $Layout->baseUrl?>opportunity/save_accordion_text",data:{lead_id:leadGlobal,claim_chart_tab:$text},cache:false,success:function(){jQuery("#qualityModal").modal("hide");}})}
 break;case 7:$text=jQuery("#impact_tab").code();if($text!=""){jQuery.ajax({type:'POST',url:"<?php echo $Layout->baseUrl?>opportunity/save_accordion_text",data:{lead_id:leadGlobal,impact_tab:$text},cache:false,success:function(){jQuery("#impactModal").modal("hide");}})}
 break;}}
 jQuery(function(){jQuery('.multi-select').multiSelect('refresh');$(".ms-container").append('<i class="glyph-icon icon-exchange"></i>');setTimeout(function(){$('#tempStyles').remove();},300);});setInterval(function(){var $filterSearchCell=$('.dataTables_filter').parent();if(!$filterSearchCell.hasClass('is-hacked')){$filterSearchCell.parent().addClass('mrg10T');$filterSearchCell.prev().remove();$filterSearchCell.removeClass('col-sm-6').addClass('col-sm-12');$filterSearchCell.find('label:not(".control-label")').css({float:'none',display:'block'});$('.dataTables_filter input[type="search"]').addClass('form-control').addClass('input-string').css({marginLeft:'0',width:'40%'}).before('<label class="control-label" style="float:left;">Search:</label>');$filterSearchCell.addClass('is-hacked');$('#datatable-contacts-sharing').next().remove();}},500);
