@@ -29,9 +29,53 @@ class lead_model extends CI_Model{
 	public $table_acquisition_activity = 'acquisition_activity_log_detail';
 	public $table_lead_template = 'lead_template_files';
 	public $table_precontacts = 'pre_contacts';
+	public $table_campaign = 'campaigns';
+	public $table_campaign_list = 'campaign_sender_lists';
 	public function __construct() {
 		parent::__construct();		
 		
+	}
+	
+	public function insertCampaign($data){
+		$this->db->insert($this->table_campaign, $data);
+		return $this->db->insert_id();
+	}
+	
+	public function insertCampaignList($data){
+		$this->db->insert($this->table_campaign_list, $data);
+		return $this->db->insert_id();
+	}
+	
+	public function updateCampaignList($campainID,$email){
+		$this->db->where("campaign_id",$campainID);
+		$this->db->where("address",$email);
+		$this->db->update($this->table_campaign_list,array("send"=>1));
+	}
+	
+	public function getCampaign($id=0,$campaignType=0){
+		$data= array();
+		if($id==0 && $campaignType>0){
+			$query = $this->db->select("*")->from($this->table_campaign)->where('id IN (SELECT distinct(campaign_id) FROM '.$this->table_campaign_list.' WHERE send=0)')->where("campaign_type",$campaignType)->order_by("start_date","DESC")->get();
+			if ($query->num_rows() > 0) {
+				foreach($query->result() as $row){ 
+					$data[] = $row;
+				}
+			}
+		} else if($id>0){
+			$query = $this->db->select("*")->from($this->table_campaign)->where("id",$id)->get();
+			if ($query->num_rows() > 0) {
+				$campaign = $query->first_row();
+				$list = array();
+				$query = $this->db->select("*")->from($this->table_campaign_list)->where("campaign_id",$campaign->id)->where('send','0')->get();
+				if ($query->num_rows() > 0) {
+					foreach($query->result() as $row){
+						$list[] = $row;
+					}
+				}
+				$data = array("campaign"=>$campaign,"list"=>$list);
+			}
+		}
+		return $data;
 	}
 	
 	public function saveTaskConversation($data){
@@ -58,6 +102,12 @@ class lead_model extends CI_Model{
 	public function deleteTaskConversation($taskID){
 		$this->db->where('task_id',$taskID);
 		$this->db->delete($this->table_task_flag);
+	}
+	
+	function deleteLeadTemplate($id){
+		$this->db->where('id',$id);
+		$this->db->delete($this->table_lead_template);
+		return $this->db->affected_rows();
 	}
 	
 	function getLeadTemplates($leadID,$type=0){
@@ -741,7 +791,8 @@ class lead_model extends CI_Model{
 	
 	function getContactByEmail($email){
 		$persons = array();
-		$getPersons = $this->db->select('*')->from($this->table_contacts.' as c')->where("c.email",$email)->get();
+		if($email!="" && !empty(trim($email)))
+		$getPersons = $this->db->select('*')->from($this->table_contacts.' as c')->where("c.email",trim($email))->get();
 		if($getPersons->num_rows()>0){
 			$persons = $getPersons->first_row();
 		}   
@@ -750,12 +801,13 @@ class lead_model extends CI_Model{
 	
 	public function insetSalesActivity($data){
 		$this->db->insert($this->table_sales_activity, $data);
-		if($this->db->insert_id()>0){
+		$data = $this->db->insert_id();
+		if($data>0){
 			$this->db->where('contact_id',$data['company_id']);
 			$this->db->where('lead_id',$data['lead_id']);
 			$this->db->update($this->table_invitees,array('last_activity'=>$data['activity_date']));
 		}
-		return $this->db->insert_id();
+		return $data;
 	}
 	
 	public function insertAcquistionActivity($data){

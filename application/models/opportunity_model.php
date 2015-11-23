@@ -306,7 +306,7 @@ class opportunity_model extends CI_Model{
 	}
 	
 	function findTask($taskID){
-		$query = $this->db->select('a.doc_url,a.id as approved_id,a.type as approved_type,a.subject, a.user_id as toUserID, a.from_user_id as fromUserID, a.parent_id,a.execution_date,a.completion_date,a.message,a.create_date as receivedData,a.execution_date as executionDate,a.status as notifyStatus,l.*,u.name as userName, u1.name as toUserName,u.type as userType')->from($this->table_requests.' as a')->join($this->table_leads.' as l','l.id=a.lead_id','left')->join($this->table_user.' as u','u.id=a.from_user_id')->join($this->table_user.' as u1','u1.id=a.user_id')->where('a.id',$taskID)->order_by('a.id','DESC')->get();
+		$query = $this->db->select('a.doc_url,a.id as approved_id,a.type as approved_type,a.subject, a.user_id as toUserID, a.from_user_id as fromUserID, a.parent_id,a.execution_date,a.completion_date,a.message,a.create_date as receivedData,a.execution_date as executionDate,a.status as notifyStatus,a.email_id as emailID,l.*,u.name as userName, u1.name as toUserName,u.type as userType')->from($this->table_requests.' as a')->join($this->table_leads.' as l','l.id=a.lead_id','left')->join($this->table_user.' as u','u.id=a.from_user_id')->join($this->table_user.' as u1','u1.id=a.user_id')->where('a.id',$taskID)->order_by('a.id','DESC')->get();
 		$data = array();
 		if ($query->num_rows() > 0) {
            $data = $query->first_row(); 
