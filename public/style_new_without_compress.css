@@ -3119,10 +3119,10 @@
     background: radial-gradient(circle at 1.98% 20.98%, #4b6cb7, transparent 100%),radial-gradient(circle at 98.02% 20.98%, #182848, transparent 100%),radial-gradient(circle at 50% 50%, #0cc285, #0cc285 100%);
 }
 .bg-gradient-9 {
-    background: #2e2e2e !important;
+   /* background: #2e2e2e !important;
     background: #a80a0e !important;
-    background: #424242 !important;
-    background: #145874 !important;
+    background: #424242 !important;*/
+    background: #033A64 !important;
 }
 
 
@@ -7199,8 +7199,8 @@ input[type='button'].btn-block {
 
 .create-lead-pager-wrapper {
     float: right;
-    margin-right: 15px;
-    margin-top: 21px;
+    margin-left: 10px;
+    margin-top: 0px;
 }
 .pager.create-lead-pager {
     margin-bottom: 0;
@@ -15851,7 +15851,7 @@ body{
     padding-bottom: 0;
     top: 39px;
     left: -12px;
-    left: -152px;
+    left: -217px;
 }
 #page-header .user-account-btn .dropdown-menu:after,
 #page-header .user-account-btn .dropdown-menu:before {
@@ -15917,7 +15917,7 @@ body{
 }
 #header-nav-right .header-btn,
 #header-nav-right > .dropdown {
-    margin: 0 0 0 5px;
+    margin: 0 0 0 0px;
     float: left;
 }
 #header-nav-right .header-btn,
@@ -15925,12 +15925,13 @@ body{
     border: transparent solid 1px;
     border-radius: 4px;
     border-radius: 0;
-    width: 45px;
-    height: 45px;
-    line-height: 43px;
+   width: 28px;
+    height: 28px;
+    line-height: 28px;
     display: block;
     text-align: center;
     position: relative;
+	margin:10px 5px 0 0;
 }
 #header-nav-right .header-btn,
 #header-nav-right .dropdown > a {
@@ -15939,9 +15940,9 @@ body{
 #header-nav-right .header-btn i,
 #header-nav-right .dropdown > a i {
     display: block;
-    height: 43px;
-    line-height: 43px;
-    width: 43px;
+    height: 26px;
+    line-height: 26px;
+    width: 26px;
 }
 #header-nav-right .header-btn .small-badge,
 #header-nav-right .dropdown > a .small-badge {
@@ -17124,13 +17125,21 @@ hr {
 
 /** Topbar Lead Name */
 .topbar-lead-name {
-    color: #ffffff;
+    color: #d9534f;
     float: left;
     font-size: 15px;
     margin-left: 20px;
 }
+.nav-tabs > li > a:first-child{
+padding-left:0px;
+}
+#tablesOtherData .title-hero span{
+margin-left:8px;
+}
 
-
+#litigationLinkToRPX, #litigationLinkToPacer, #tab8 a, #show_data table a{
+color:#2196F3
+}
 /** Form elements */
 label input[type=checkbox] {
     position: relative;
@@ -17278,6 +17287,9 @@ table.dataTable thead > tr > th {
 
 
 /** Email box (top of page) datatable */
+#all_type_list tbody td:first-child{
+overflow:hidden;display:block;white-space:nowrap;text-overflow:ellipsis;
+}
 #all_type_list tbody td a,
 #all_type_list_my tbody td a {
     box-shadow: none !important;
@@ -19291,3 +19303,163 @@ input[type="text"], input[type="number"] {
 .ui-resizable-sw { cursor: sw-resize; width: 9px; height: 9px; left: -5px; bottom: -5px; }
 .ui-resizable-nw { cursor: nw-resize; width: 9px; height: 9px; left: -5px; top: -5px; }
 .ui-resizable-ne { cursor: ne-resize; width: 9px; height: 9px; right: -5px; top: -5px;}*/
+/*Progress tracker CSS*/
+ol.progtrckr {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+    ol.progtrckr li {
+        display: inline-block;
+        text-align: center;
+        line-height: 3em;
+    }
+
+        ol.progtrckr li.progtrckr-done {
+            color: black;
+            border-bottom: 4px solid yellowgreen;
+        }
+
+        ol.progtrckr li.progtrckr-todo {
+            color: silver;
+            border-bottom: 4px solid silver;
+        }
+
+        /*ol.progtrckr li:after {
+            content: "\00a0\00a0";
+        }*/
+
+        ol.progtrckr li:before {
+            position: relative;
+            bottom: -2.5em;
+            float: left;
+            left: 50%;
+            line-height: 1em;
+        }
+
+        ol.progtrckr li:first-child {
+            text-align: left;
+            padding-left: 0 !important;
+        }
+
+            ol.progtrckr li:first-child:before {
+                left: 0;
+            }
+
+            ol.progtrckr li:first-child span.statusTitle {
+                position: relative;
+                left: -15px;
+            }
+
+        ol.progtrckr li:last-child {
+            text-align: right;
+            padding-right: 0 !important;
+        }
+
+
+            ol.progtrckr li:last-child:before {
+                left: 100%;
+            }
+
+            ol.progtrckr li:last-child span.statusTitle {
+                position: relative;
+                right: -15px;
+            }
+
+        ol.progtrckr li.progtrckr-done:before {
+            content: "\2713";
+            color: white;
+            background-color: yellowgreen;
+            height: 1.2em;
+            width: 1.2em;
+            line-height: 1.2em;
+            border: none;
+            border-radius: 1.2em;
+            text-align: center;
+        }
+
+        ol.progtrckr li.progtrckr-todo:before {
+            content: "\039F";
+            color: silver;
+            background-color: white;
+            font-size: 1.5em;
+            bottom: -1.6em;
+            text-align: center;
+        }
+
+/* End progress tracker CSS*/
+
+
+/* Tooltip CSS*/
+/* Corner radius */
+.ui-corner-all
+{
+	border-radius: 4px/*{cornerRadius}*/;
+}
+.ui-tooltip {
+	position: absolute;
+	z-index: 9999;
+	max-width: 300px;
+	-webkit-box-shadow: 0 0 5px #aaa;
+	box-shadow: 0 0 5px #aaa;
+    background: #666;
+    color: white;
+    border: none;
+    padding: 0;
+    opacity: 1;
+}
+
+.ui-tooltip-content {
+    position: relative;
+    padding: 1em;
+    min-width: 100px;
+}
+
+    .ui-tooltip-content::after {
+        content: '';
+        position: absolute;
+        border-style: solid;
+        display: block;
+        width: 0;
+    }
+
+.right .ui-tooltip-content::after {
+    top: 18px;
+    left: -10px;
+    border-color: transparent #666;
+    border-width: 10px 10px 10px 0;
+}
+
+.left .ui-tooltip-content::after {
+    top: 18px;
+    right: -10px;
+    border-color: transparent #666;
+    border-width: 10px 0 10px 10px;
+}
+
+.top .ui-tooltip-content::after {
+    bottom: -10px;
+    left: 50%;
+    border-color: #666 transparent;
+    border-width: 10px 10px 0;
+}
+
+.bottom .ui-tooltip-content::after {
+    top: -10px;
+    left: 50%;
+    border-color: #666 transparent;
+    border-width: 0 10px 10px;
+}
+#header-nav-right ul>li>a{padding: 0 3px !important;}
+.menu-active{background:#7f8c8d !important;color:#fff !important;}
+#header-nav-right .dropdown > a.menu-active .glyph-icon,a.menu-active .glyph-icon{color:#fff !important;}
+#header-nav-right .dropdown > a{line-height:15px !important; padding-left:3px;}
+.seablue{background-color:#0378D2;color:#fff;}.torquoise{background-color:#67B7F5;color:#fff;}.darksea{background-color:#033A64;color:#fff;}.redsea{background-color:red;color:#fff;}.no-contact{background-color:#DEBFC;color:#fff;}
+.clockUl{float:left;margin: 0;list-style: none;padding: 0px;width:90px;}
+.clockUl li{float:left;width:100%;padding:1px 5px;color:#fff}
+/*End Tooltip CSS*/
+
+#tasksCreatedForMeSlidebarTable_wrapper table>tbody>tr, #tasksICreatedSlidebarTable_wrapper table>tbody>tr {
+cursor:hand;cursor:pointer;
+}
