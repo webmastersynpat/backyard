@@ -43,7 +43,12 @@ class Imap {
             $enc = '/imap/ssl/novalidate-cert';
         else if($credential['encryption']!=null && isset($credential['encryption']) && $credential['encryption']=='tls')
             $enc = '/imap/tls/novalidate-cert';
-        $this->mailbox = "{" . $credential['mailbox'] . $enc . "}";
+		if(isset($credential['folder'])){
+			$this->mailbox = "{" . $credential['mailbox'] . $enc . "}".$credential['folder'];
+		} else {
+			$this->mailbox = "{" . $credential['mailbox'] . $enc . "}";
+		}
+        
 		$this->imap = @imap_open($this->mailbox, $credential['username'], $credential['password']);
     }
     
@@ -100,6 +105,8 @@ class Imap {
         $folders = imap_list($this->imap, $this->mailbox, "*");
         return str_replace($this->mailbox, "", $folders);
     }
+	
+
     
     
     /**
@@ -267,6 +274,32 @@ class Imap {
     }
     
     
+	 /**
+     * copy given message in new folder
+     *
+     * @return bool success or not
+     * @param $id of the message
+     * @param $target new folder
+     */
+    public function copyMessage($id, $target) {
+        return $this->copyMessages(array($id), $target);
+		
+    }
+	
+	 /**
+     * copy given message in new folder
+     *
+     * @return bool success or not
+     * @param $id of the message
+     * @param $target new folder
+     */
+    public function copyMessages($ids, $target) {
+        if(imap_mail_copy($this->imap, implode(",", $ids), $target,CP_MOVE)===false)
+            return false;
+        return imap_expunge($this->imap);
+		
+    }
+	
     /**
      * move given message in new folder
      *
@@ -287,7 +320,7 @@ class Imap {
      * @param $target new folder
      */
     public function moveMessages($ids, $target) {
-        if(imap_mail_move($this->imap, implode(",", $ids), $target, CP_UID)===false)
+        if(imap_mail_move($this->imap, implode(",", $ids), $target)===false)
             return false;
         return imap_expunge($this->imap);
     }
@@ -317,6 +350,11 @@ class Imap {
         return imap_setflag_full($this->imap, $id, trim($flags), ST_UID);
     }
     
+	public function imapSearch($q){
+		$some = @imap_search($this->imap,$q,SE_UID);
+		return $some;
+	}
+	
     
     /**
      * return content of messages attachment
@@ -332,7 +370,6 @@ class Imap {
         $header = imap_headerinfo($this->imap, $messageIndex);
         $mailStruct = imap_fetchstructure($this->imap, $messageIndex);
         $attachments = $this->getAttachments($this->imap, $messageIndex, $mailStruct, "");
-        
         if($attachments==false)
             return false;
         

@@ -11,7 +11,7 @@ class OAuthConsumer {
   function __construct($credential = array(), $callback_url=NULL) {
     $this->key = $credential['key'];
     $this->secret = $credential['secret'];
-    $this->callback_url = $callback_url; 
+    $this->callback_url = $callback_url;
   }
   function __toString() {
     return "OAuthConsumer[key=$this->key,secret=$this->secret]";

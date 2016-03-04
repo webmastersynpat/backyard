@@ -10,7 +10,7 @@
 if (!defined('BASEPATH'))
     exit('No direct script access allowed');
 
-class Layout { 
+class Layout {
 
     private $_ci;
     public $data = array();     // array to pass variables in views

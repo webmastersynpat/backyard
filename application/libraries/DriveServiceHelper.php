@@ -1,6 +1,6 @@
-<?php 
-require_once realpath(dirname(__FILE__) . '/autoload.php');
-define( 'BACKUP_FOLDER', 'SynPatAPI' ); 
+<?php
+require_once realpath(dirname(__FILE__) . '/autoload.php');   
+define( 'BACKUP_FOLDER', 'SynPatAPI' );
 //define( 'BACKUP_FOLDER', 'Master Documents' );
 define('PASTING_FOLDER','Opportunities');
 define('MASTER_FOLDER','Master Documents');
@@ -13,9 +13,7 @@ define( 'CLIENT_ID',  '671429899926-tvqle2htej2bmq1q55k2tnr1dpf3k5g2.apps.google
 define( 'SERVICE_ACCOUNT_NAME', '671429899926-tvqle2htej2bmq1q55k2tnr1dpf3k5g2@developer.gserviceaccount.com' );
 define( 'KEY_PATH', realpath(dirname(__FILE__) . '/Backyard Project-bef3d9642631.p12'));
 define( 'CLIENT_SECRET', realpath(dirname(__FILE__) . '/client_secret_1036285537673-l8gak1un7a18ql6bq9s3i6uag5umit7b.apps.googleusercontent.com.json'));
-
-
-
+    
 
 class GmailServiceHelper{
 	private $_service;
@@ -28,8 +26,13 @@ class GmailServiceHelper{
 		$this->_client->addScope('https://www.googleapis.com/auth/gmail.compose');           
 		$this->_client->addScope('https://www.googleapis.com/auth/gmail.modify');           
 		$this->_client->addScope('https://www.googleapis.com/auth/gmail.readonly');       
+		$this->_client->addScope('https://www.googleapis.com/auth/userinfo.email');           
+		$this->_client->addScope('https://apps-apis.google.com/a/feeds/groups/');           
+		$this->_client->addScope('https://apps-apis.google.com/a/feeds/alias/');           
+		$this->_client->addScope('https://apps-apis.google.com/a/feeds/user/');           
 		$this->_client->addScope('https://www.google.com/m8/feeds');           
-		$this->_client->addScope('https://www.googleapis.com/auth/calendar');           
+		$this->_client->addScope('https://www.google.com/m8/feeds/user/');           
+		$this->_client->addScope('https://www.googleapis.com/auth/calendar');     
 		$this->_client->setAccessType('offline');
 		$this->_client->setApprovalPrompt('force');
 		
@@ -59,13 +62,21 @@ class GmailServiceHelper{
 		}
 	}
 	
-	function insert_event($event){
-		$eventC = new Google_Service_Calendar_Event($event);
-		$calendarId = 'primary';
-		$service = new Google_Service_Calendar($this->_client);
-		$eventR = $service->events->insert($calendarId, $eventC);
-		return $eventR;
+	function getAllContacts(){
+		$oauth = $this->_client->getAuth();	
+		$access_token = json_decode($this->getAccessToken())->access_token;
+		$pUrl = 'default/full?v=3&max-results=50000000&oauth_token='.$access_token;;
+		/*$request = new Google_Http_Request("https://www.google.com/m8/feeds/contacts/".$pUrl."&alt=json");*/
+		$request = new Google_Http_Request("https://www.google.com/m8/feeds/contacts/".$pUrl);
+		$oauth->sign($request);
+		$io = $this->_client->getIo();
+		$ass = $io->makeRequest($request);
+		$result_json = $io->makeRequest($request)->getResponseBody();
+		/*$result = json_decode($result_json, true); */
+		return $result_json;
 	}
+	
+	
 	
 	public function createAuthUrl(){
 		return $this->_client->createAuthUrl();
@@ -291,7 +302,12 @@ class GmailServiceHelper{
 	public function getAuthUserEmail(){
 		$service = new Google_Service_Oauth2($this->_client);
 		return  $service->userinfo->get();
-	}	
+	}
+
+	public function getColor(){
+		$service = new Google_Service_Calendar($this->_client);
+		return  $service->colors->get();
+	}
 	
 	public function searchEmails($q){
 		$this->_service = new Google_Service_Gmail($this->_client);
@@ -326,15 +342,20 @@ class GmailServiceHelper{
 		}			
 	}
 	
-	public function newMessageList($maxResults = 0,$label = 'INBOX'){
+	
+	public function newMessageList($maxResults = 0,$label = 'INBOX',$nextPageToken=null){
 		$this->_service = new Google_Service_Gmail($this->_client);
 		$optParams = array();
         if($maxResults>0){
 			$optParams['maxResults'] = 100; 
 		}	   
+		if($nextPageToken){
+			$optParams['pageToken'] = $nextPageToken;
+		}
 		$optParams['labelIds'] = $label; 
 		$lists = $this->_service->users_messages->listUsersMessages('me',$optParams);
 		/*$lists = $threads->getThreads();*/
+		$pageToken = $lists->getNextPageToken();
 		$messages = array();
 		$attachmentArray = array();
 		if(count($lists)>0){
@@ -353,7 +374,7 @@ class GmailServiceHelper{
 						$label[] = $lbl;
 					}					
 				}
-				$messages[] = array("message_id"=>$messageId,"thread_id"=>$threadId,'labelIds'=>array_unique($label),"header"=>$headers,'parts'=>$parts,'content'=>$message);
+				$messages[] = array("message_id"=>$messageId,"thread_id"=>$threadId,'labelIds'=>array_unique($label),"header"=>$headers,'parts'=>$parts,'content'=>$message,'pageToken'=>$pageToken);
 			}
 		}
 		return $messages;
@@ -482,7 +503,13 @@ class GmailServiceHelper{
 		}
 		return $messages;
 	} */
-	
+	function isHTML($string){		
+		if(preg_match("#</*(div|DIV|TABLE|table|P|p)[^>]*>#i", $string)){
+			return true;
+		} else {
+			return false;
+		}
+	}
 	
 	public function findThreadData($threadID){
 		$this->_service = new Google_Service_Gmail($this->_client);
@@ -511,13 +538,33 @@ class GmailServiceHelper{
 					
 					$rawData = $rawBody->data;	
 					$sanitizedData = strtr($rawData,'-_', '+/');
-					$body = base64_decode($sanitizedData);					
-				} else if($parts[0]->mimeType=='multipart/alternative'){
+					$body = base64_decode($sanitizedData);	
+					if($this->isHTML($body)===false){
+						$body = nl2br($body);
+					}
+				} else if($parts[0]->mimeType=='multipart/alternative' || $parts[0]->mimeType=='multipart/related'){
 					$internalParts = $parts[0]->getParts();
-					$rawBody = $internalParts[1]->getBody();
-					$rawData = $rawBody->data;	
+					$rawBody = $internalParts[1]->getBody();					
+					if($rawBody->size>0 && !empty($rawBody->data)){
+						$rawData = $rawBody->data;
+					} else {
+						$innerParts = $internalParts[0]->getParts();						
+						$rawBody = $innerParts[1]->getBody();
+						$rawData = $rawBody->data;
+					}
+					
+					if(empty($rawData)){
+						if(isset($parts[1])){						
+							$rawData = $parts[1]->getBody();
+						} else {						
+							$rawData = $parts[0]->getBody();
+						}
+					}
 					$sanitizedData = strtr($rawData,'-_', '+/');
 					$body = base64_decode($sanitizedData);
+					if($this->isHTML($body)===false){
+						$body = nl2br($body);
+					}
 					for($i=1;$i<count($parts);$i++){ 
 						$fileName = $parts[$i]->filename;
 						$realAttachID = "";
@@ -838,10 +885,40 @@ class SignatureServiceHelper {
 		return 'Authorization: Bearer ' . $this->_token;
 	}
 	
+	public function putUserSignature($signature,$email){
+		$authString = $this->getAccessToken();
+		$stringUsername = explode('@',$email);
+		if($stringUsername[1]=="synpat.com"){
+			
+			$service_url = 'https://apps-apis.google.com/a/feeds/emailsettings/2.0/synpat.com/'.$stringUsername[0].'/signature';
+			$curl = curl_init($service_url);
+			curl_setopt($curl, CURLOPT_TIMEOUT, 30); //timeout after 30 seconds
+			curl_setopt($curl, CURLOPT_HTTPGET, 1);
+			curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "PUT");
+			curl_setopt($curl, CURLOPT_POSTFIELDS, $signature);
+			curl_setopt($curl, CURLOPT_HTTPHEADER, array($authString));
+			curl_setopt($curl, CURLOPT_HEADER, true);
+			curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+			$curl_response = curl_exec($curl);
+			curl_close($curl);
+			echo "<pre>";
+			print_r($curl_response);
+			die;
+			if($curl_response){
+				return $curl_response;
+			} else {
+				return '';
+			}
+		} else {
+			return '';
+		}
+	}
+	
 	public function getUserSignature($email){
 		$authString = $this->getAccessToken();
 		$stringUsername = explode('@',$email);
 		if($stringUsername[1]=="synpat.com"){
+			$stringUsername[0]="admin";
 			$service_url = 'https://apps-apis.google.com/a/feeds/emailsettings/2.0/synpat.com/'.$stringUsername[0].'/signature';
 			$curl = curl_init($service_url);
 			curl_setopt($curl, CURLOPT_TIMEOUT, 30); //timeout after 30 seconds
@@ -1248,6 +1325,85 @@ class ContactServiceHelper{
 	}
 }
 
+class CalendarServiceHelper{
+	private $_service;
+	
+	protected $scope = array('https://www.googleapis.com/auth/calendar','https://www.googleapis.com/auth/calendar.readonly');
+	
+	private $_client;
+	
+	public function __construct() {
+		$this->_client = new Google_Client();
+		$this->_client->setClientId( CLIENT_ID );
+		
+		$this->_client->setAssertionCredentials( new Google_Auth_AssertionCredentials(
+				SERVICE_ACCOUNT_NAME,
+				$this->scope,
+				file_get_contents( KEY_PATH ) )
+		);
+		if($this->_client->getAuth()->isAccessTokenExpired()) {	 	
+			$this->_client->getAuth()->refreshTokenWithAssertion(new Google_Auth_AssertionCredentials(
+				SERVICE_ACCOUNT_NAME,
+				$this->scope,
+				file_get_contents( KEY_PATH )));	 	
+		}
+		$this->_service = new Google_Service_Calendar($this->_client);
+	}
+	
+	public function getColor(){
+		$_service = new Google_Service_Calendar($this->_client);
+		return  $_service->colors->get();
+	}
+	
+	function insert_event($event){
+		$eventC = new Google_Service_Calendar_Event($event);
+		$calendarId = 'primary';
+		$service = new Google_Service_Calendar($this->_client);
+		$eventR = $service->events->insert($calendarId, $eventC);
+		return $eventR;
+	}
+	
+	public function getCalendarList(){
+		$calendarList = array();
+		do {
+			try {
+			  $parameters = array();
+			  if (isset($pageToken)) {				
+				$parameters['pageToken'] = $pageToken;
+			  }
+			  $children = $this->_service->calendarList->listCalendarList($parameters);
+			  foreach ($children->getItems() as $child) {
+				$calendarList[] = $child;
+			  }
+			  $pageToken = $children->getNextPageToken();
+			} catch (Exception $e) {
+			  $pageToken = NULL;
+			}
+		} while ($pageToken);		
+		return $calendarList;
+	}
+	
+	public function getEventsList($calendarID,$timeMin){
+		$eventList = array();
+		do {
+			try {
+			  $parameters = array('timeMin'=>$timeMin,'timeZone'=>date_default_timezone_get(),'orderBy'=>'updated','maxResults'=>2500);
+			  if (isset($pageToken)) {				
+				$parameters['pageToken'] = $pageToken;
+			  }
+			  $children = $this->_service->events->listEvents($calendarID,$parameters);
+			  foreach ($children->getItems() as $child) {
+				$eventList[] = $child;
+			  }
+			  $pageToken = $children->getNextPageToken();
+			} catch (Exception $e) {
+			  $pageToken = NULL;
+			}
+		} while ($pageToken);
+		return $eventList;
+	}
+}
+
 class DriveServiceHelper {
 	
 	protected $scope = array('https://www.googleapis.com/auth/drive');
@@ -1563,6 +1719,7 @@ class DriveServiceHelper {
 	
 	function deleteFilesFolder($folderID){
 		$getAllDataInFolder = $this->getFileIDFromChildern($folderID);
+		
 		if(count($getAllDataInFolder)>0){
 			foreach($getAllDataInFolder as $child){
 				$this->removeFileFromFolder($folderID,$child->getId());

@@ -16,7 +16,7 @@ class SimpleLoginSecure
 	var $CI;
 	var $user_table = 'users';
 	var $lead_table = 'assign_leads';
-	var $module_table = 'assign_modules';  
+	var $module_table = 'assign_modules';
  
 	/**
 	 * Create a user account
@@ -27,7 +27,7 @@ class SimpleLoginSecure
 	 * @param	bool
 	 * @return	bool
 	 */
-	function create($name='',$email = '', $password = '', $phone_number='',$type=1 ,$auto_login = true) 
+	function create($name='',$email = '', $password = '', $phone_number='',$type=1,$directNumber,$title,$ext,$flag ,$auto_login = true) 
 	{
 		$this->CI =& get_instance();
 		
@@ -56,6 +56,10 @@ class SimpleLoginSecure
 					'password' => $password_hashed,
 					'phone_number' => $phone_number,
 					'type'	=> $type,
+					'ext' =>$ext,
+					'flag'=>$flag,
+					'title'=>$title,
+					'direct_number'=>$directNumber,
 					'user_date' => date('c'),
 					'user_modified' => date('c'),
 				);		
@@ -80,7 +84,7 @@ class SimpleLoginSecure
 	 * @param	bool
 	 * @return	bool
 	 */
-	function update($id = null, $password='',$profile_pic='',$phoneNumber, $auto_login = true) 
+	function update($id = null, $password='',$profile_pic='',$phoneNumber,$directNumber,$mobileNumber,$email_for_signature, $auto_login = true) 
 	{
 		$this->CI =& get_instance();
 
@@ -103,6 +107,9 @@ class SimpleLoginSecure
 		$data = array(
 					'password' => $password_hashed,
 					'phone_number' => $phoneNumber,
+					'direct_number' => $directNumber,
+					'mobile_number' => $mobileNumber,
+					'email_for_signature' => $email_for_signature,
 					'profile_pic' => $profile_pic,
 					'user_modified' => date('c'),
 				);
@@ -115,14 +122,23 @@ class SimpleLoginSecure
 			$this->CI->db->where('id', $id);
 			$query = $this->CI->db->get_where($this->user_table);
 			if ($query->num_rows() > 0){ 
-				$user_data['user'] = $query->first_row(); 
+				$user_data['user'] = (array)$query->first_row(); 
 				
-			}
-			$user_data['email'] = $email;
-			$user_data['user'] = $user_data['email']; // for compatibility with Simplelogin
+			}	
 			
+			/*$user_data['email'] = $user_data['user']->email;*/
+			$user_data['modules_assign'] = $this->getAllModules($id);
+			$user_data['logged_in'] = true;
+			if(!isset($_SESSION)){
+				session_start();
+			}			
 			$user_data['phone_number'] = $phoneNumber; // for compatibility with Simplelogin
-			
+			$user_data['direct_number'] = $directNumber; // for compatibility with Simplelogin
+			$user_data['mobile_number'] = $mobileNumber; // for compatibility with Simplelogin
+			$user_data['email_for_signature'] = $email_for_signature; // for compatibility with Simplelogin
+			if(isset($_SESSION['find_user']) && !empty($_SESSION['find_user']['type'])){
+				$_SESSION['find_user'] = $user_data;
+			}
 			$this->CI->session->set_userdata($user_data);			
 		}
 		return true;
@@ -140,7 +156,7 @@ class SimpleLoginSecure
 	 * @param	bool
 	 * @return	bool
 	 */
-	function updateProfilePic($id = null,$profile_pic='',$phoneNumber, $auto_login = true) 
+	function updateProfilePic($id = null,$profile_pic='',$phoneNumber,$directNumber,$mobileNumber, $email_for_signature,$auto_login = true) 
 	{
 		$this->CI =& get_instance();
 
@@ -161,6 +177,9 @@ class SimpleLoginSecure
 		$data = array(
 					'profile_pic' => $profile_pic,
 					'phone_number' => $phoneNumber,
+					'direct_number' => $directNumber,
+					'mobile_number' => $mobileNumber,
+					'email_for_signature' => $email_for_signature,
 					'user_modified' => date('c'),
 				);
  
@@ -173,15 +192,23 @@ class SimpleLoginSecure
 			$this->CI->db->where('id', $id);
 			$query = $this->CI->db->get_where($this->user_table);
 			if ($query->num_rows() > 0){ 
-				$user_data['user'] = $query->first_row(); 
+				$user_data['user'] = (array)$query->first_row(); 
 				
 			}	
 			
-			$user_data['email'] = $email;
-			$user_data['user'] = $user_data['email']; // for compatibility with Simplelogin
-			$user_data['profile_pic'] = $profile_pic; // for compatibility with Simplelogin
+			/*$user_data['email'] = $user_data['user']->email;*/
+			$user_data['modules_assign'] = $this->getAllModules($id);
+			$user_data['logged_in'] = true;
+			if(!isset($_SESSION)){
+				session_start();
+			}			
 			$user_data['phone_number'] = $phoneNumber; // for compatibility with Simplelogin
-			
+			$user_data['direct_number'] = $directNumber; // for compatibility with Simplelogin
+			$user_data['mobile_number'] = $mobileNumber; // for compatibility with Simplelogin
+			$user_data['email_for_signature'] = $email_for_signature; // for compatibility with Simplelogin
+			if(isset($_SESSION['find_user']) && !empty($_SESSION['find_user']['type'])){
+				$_SESSION['find_user'] = $user_data;
+			}
 			$this->CI->session->set_userdata($user_data);
 			}
 		return true;
@@ -216,6 +243,7 @@ class SimpleLoginSecure
 		if ($query->num_rows() > 0) 
 		{
 			$user_data = $query->row_array(); 
+			
 			
 			$hasher = new PasswordHash(PHPASS_HASH_STRENGTH, PHPASS_HASH_PORTABLE);
 
