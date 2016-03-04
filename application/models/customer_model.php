@@ -225,8 +225,20 @@ class Customer_model extends CI_Model{
 		$data = array();
 		if ($query->num_rows() > 0) {
             $data = $query->first_row();
+			$data->broker_details = $this->findBrokerDetails($data->broker);
 			$data->companyUsers = $this->getAllContactBelongToCompany($companyID);
         }
+		return $data;
+	}
+	
+	public function findBrokerDetails($brokerID){
+		$data = array();
+		if($brokerID>0){
+			$query = $this->db->select("c.*,co.company_name , co.id as companyID")->from($this->table.' as c')->join($this->table_company.' as co','co.id = c.company_id')->where('c.id',$brokerID)->get();
+			if ($query->num_rows() > 0) {
+				$data = $query->first_row();
+			}
+		}
 		return $data;
 	}
 	

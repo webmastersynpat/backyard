@@ -13,10 +13,13 @@ class general_model extends CI_Model{
 	public $table_button = "buttons";
 	public $table_button_stage = "stages";
 	public $table_email_template = "email_template";
+	public $table_bank_template = "bank_template";
 	public $table_sector_department = "map_sectors_departments";
 	public $table_category = "category";
 	public $table_company = "company";
 	public $table_transaction = "transaction";
+	public $table_linkedincontacts = "linked_contacts";
+	public $table_linkedpageno = "linked_pageno";
 	public function __construct() {
 		parent::__construct();
 	}
@@ -139,6 +142,22 @@ class general_model extends CI_Model{
 	public function insertTransaction($data){
 		$this->db->insert($this->table_transaction, $data);
 		return $this->db->insert_id();
+	}
+	
+	public function insertLinkedinContacts($data){
+		$this->db->insert($this->table_linkedincontacts, $data);
+		return $this->db->insert_id();
+	}
+	
+	public function updatePageNo($id,$data){
+		$this->db->where('id',$id);
+		$this->db->update($this->table_linkedpageno, $data);
+		return $this->db->affected_rows();
+	}
+	
+	public function getCountInsertedData(){
+		return $this->db->select('page_no')->from($this->table_linkedpageno)->get()->row()->page_no;
+		 
 	}
 	
 	public function insertDoc($data){
@@ -442,9 +461,13 @@ class general_model extends CI_Model{
        return $this->db->insert_id();
     }
 	
-	
 	public function insertTemplate($data){
 		$this->db->insert($this->table_email_template,$data);
+        return $this->db->insert_id();
+	}
+	public function insertBankTemplate($data){
+		$this->db->insert($this->table_bank_template,$data);
+		/*echo $this->db->last_query();*/
         return $this->db->insert_id();
 	}
 	public function getAllTemplate(){
@@ -454,6 +477,15 @@ class general_model extends CI_Model{
             foreach ($query->result() as $row) {
                 $data[] = $row;
             }            
+        }     
+		return $data;
+	}
+	
+	public function findInvitationTemplateByLead($leadID){
+		$query = $this->db->select('*')->from($this->table_email_template)->where('lead_id',$leadID)->where('main_type',2)->get();
+		$data = array();   
+		if ($query->num_rows() > 0) {
+           $data = $query->first_row();
         }     
 		return $data;
 	}
@@ -478,6 +510,11 @@ class general_model extends CI_Model{
 		return $this->db->affected_rows();
 	}
 	
+	public function updateBankTemplate($data,$id){		
+		$this->db->where('id',$id)->update($this->table_bank_template,$data);
+		return $this->db->affected_rows();
+	}
+	
 	public function findListButtonByType($type){
 		$query = $this->db->select('sort as orderNo')->from($this->table_button)->where('type',$type)->order_by('sort DESC')->get();
 		$data = array();
@@ -488,7 +525,7 @@ class general_model extends CI_Model{
 	}	
     
 	public function getAllTemplates(){
-		$query = $this->db->select('*')->from($this->table_email_template)->get();
+		$query = $this->db->select('*')->from($this->table_bank_template)->get();
 		$data = array(); 
 		if ($query->num_rows() > 0) {
             foreach ($query->result() as $row) {
@@ -498,8 +535,44 @@ class general_model extends CI_Model{
 		return $data;
 	}
 	
+	function getAllTemplateBYLead($leadID){
+		$query = $this->db->select('*')->from($this->table_email_template)->where('lead_id',$leadID)->get();
+		$data = array();
+		if ($query->num_rows() > 0) {           
+            foreach ($query->result() as $row) {
+                $data[] = $row;
+            }                  
+        }
+		return $data;
+	}
+	
+	
+	
+	function moveAllToLeadBankTemplate($data){
+		$this->db->insert($this->table_email_template,$data);				
+		return $this->db->insert_id();		
+	}
+	
 	function getTemplateBYType($type){
 		$query = $this->db->select('*')->from($this->table_email_template)->where('type',$type)->get();
+		$data = array();
+		if ($query->num_rows() > 0) {           
+            $data = $query->first_row();                     
+        }
+		return $data;
+	}
+	
+	function checkLeadTemplateStage($stage,$lead){
+		$query = $this->db->select('*')->from($this->table_email_template)->where('stage',$stage)->where('lead_id',$lead)->get();
+		$data = array();
+		if ($query->num_rows() > 0) {           
+            $data = $query->first_row();                     
+        }
+		return $data;
+	}
+	
+	function checkBankTemplateStage($stage){
+		$query = $this->db->select('*')->from($this->table_bank_template)->where('stage',$stage)->get();
 		$data = array();
 		if ($query->num_rows() > 0) {           
             $data = $query->first_row();                     

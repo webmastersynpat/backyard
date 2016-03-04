@@ -18,6 +18,7 @@ class opportunity_model extends CI_Model{
 	public $table_assets = 'assets';
 	public $table_invitees = 'invitees';
 	public $table_acquisition_company = 'acquisition_company';
+	public $table_acquisition_activity_log_detail = 'acquisition_activity_log_detail';
 	public $table_invitees_in_sectors = 'invitees_in_sectors';
 	public $table_potential = 'potential_syndicates';
 	public $table_commitment = 'commitments';
@@ -27,6 +28,8 @@ class opportunity_model extends CI_Model{
 	public $table_comparable = 'comparables';
 	public $table_damages = 'damages';
 	public $table_sales_activity_log_detail = 'sales_activity_log_detail';
+	public $table_presales_activity_log_detail = 'presale_activity_log_detail';
+	public $table_presale_broker = 'presale_broker';
 	
 	
 	function __construct() {
@@ -205,6 +208,102 @@ class opportunity_model extends CI_Model{
         }
 		return $data;
 	}
+	function checkAllLeadsByContact($contactID){
+		$data = array(); 
+		$activity=0;
+		$queryContact = $this->db->select("*")->from($this->table_contacts)->where("id",$contactID)->get();
+		if ($queryContact->num_rows() > 0) {
+            $contact = $queryContact->first_row();
+			$query = $this->db->select("distinct(l.id) as id, l.lead_name")->from($this->table_invitees.' as s')->join($this->table_leads.' as l','l.id=s.lead_id')->where('s.contact_id',$contact->company_id)->where('l.status <"3"')->get();
+			if ($query->num_rows() > 0) {
+				$activity = 1;
+				foreach ($query->result() as $row) {	
+					$leadIds[] = $row->id;
+					$row->activity = 1;
+					$data[] = $row;
+				}
+			}
+			$query = $this->db->select("distinct(l.id) as id, l.lead_name")->from($this->table_acquisition_company.' as a')->join($this->table_leads.' as l','l.id=a.lead_id')->where('a.contact_id',$contact->company_id)->where('l.status <"3"')->get();
+			if ($query->num_rows() > 0) {
+				$activity = 2;
+				foreach ($query->result() as $row) {
+					/*if(!in_array($row->id,$leadIds)){*/
+						$row->activity = 2;
+						$data[] = $row;
+					/*}*/	
+				}
+			}
+		}
+		return $data;
+	}
+	
+	function checkAllLeadsFromEmailActivityByID($emailID){
+		$data = array();
+		$checkAquisitionActivity = $this->db->select('*')->from($this->table_acquisition_activity_log_detail)->where('email_id',$emailID)->get();
+		if ($checkAquisitionActivity->num_rows() > 0) {
+			$row = $checkAquisitionActivity->first_row();
+			$row->activity = 2;
+			$data = $row;
+		} else {
+			$checkSalesActivity = $this->db->select('*')->from($this->table_sales_activity_log_detail)->where('email_id',$emailID)->get();
+			if ($checkSalesActivity->num_rows() > 0) {
+				$row = $checkSalesActivity->first_row();
+				$row->activity = 1;
+				$data = $row;
+			} else {
+				$checkPreSalesActivity = $this->db->select('*')->from($this->table_presales_activity_log_detail)->where('email_id',$emailID)->get();
+				if ($checkPreSalesActivity->num_rows() > 0) {
+					$row = $checkPreSalesActivity->first_row();
+					$row->activity = 3;
+					$data = $row;
+				}
+			}
+		}
+		return $data;
+	}
+	
+	function checkAllLeadsFromEmailActivity($email){
+		$list = array();  
+		$activity=0;
+		$queryContact = $this->db->select("*")->from($this->table_contacts)->where("email",$email)->get();
+		$contact = array();
+		$leadIds = array();
+		$data = array();
+		if ($queryContact->num_rows() > 0) {
+            $contact = $queryContact->first_row();
+			$query = $this->db->select("distinct(l.id) as id, l.lead_name")->from($this->table_invitees.' as s')->join($this->table_leads.' as l','l.id=s.lead_id')->where('s.contact_id',$contact->company_id)->where('l.status <"3"')->get();
+			
+			if ($query->num_rows() > 0) {
+				$activity = 1;
+				foreach ($query->result() as $row) {	
+					$leadIds[] = $row->id;
+					$row->activity = 1;
+					$data[] = $row;
+				}
+			}
+			$query = $this->db->select("distinct(l.id) as id, l.lead_name")->from($this->table_acquisition_company.' as a')->join($this->table_leads.' as l','l.id=a.lead_id')->where('a.contact_id',$contact->company_id)->where('l.status <"3"')->get();
+			if ($query->num_rows() > 0) {
+				$activity = 2;
+				foreach ($query->result() as $row) {
+					/*if(!in_array($row->id,$leadIds)){*/
+						$row->activity = 2;
+						$data[] = $row;
+					/*}*/	
+				}
+			}
+			$query = $this->db->select("distinct(l.id) as id, l.lead_name")->from($this->table_presale_broker.' as a')->join($this->table_leads.' as l','l.id=a.lead_id')->where('a.broker_id',$contact->company_id)->where('l.status <"3"')->get();
+			if ($query->num_rows() > 0) {
+				$activity = 3;
+				foreach ($query->result() as $row) {
+					/*if(!in_array($row->id,$leadIds)){*/
+						$row->activity = 3;
+						$data[] = $row;
+					/*}*/	
+				}
+			}
+        }
+		return array('list'=>$data,'contact'=>$contact,'activity'=>$activity);
+	} 
 	
 	public function checkCompanyInSales($leadID,$companyID){
 		$query = $this->db->select("*")->from($this->table_invitees)->where("lead_id",$leadID)->where('contact_id',$companyID)->get();
@@ -307,6 +406,7 @@ class opportunity_model extends CI_Model{
 	
 	function findTask($taskID){
 		$query = $this->db->select('a.doc_url,a.id as approved_id,a.type as approved_type,a.subject, a.user_id as toUserID, a.from_user_id as fromUserID, a.parent_id,a.execution_date,a.completion_date,a.message,a.create_date as receivedData,a.execution_date as executionDate,a.status as notifyStatus,a.email_id as emailID,l.*,u.name as userName, u1.name as toUserName,u.type as userType')->from($this->table_requests.' as a')->join($this->table_leads.' as l','l.id=a.lead_id','left')->join($this->table_user.' as u','u.id=a.from_user_id')->join($this->table_user.' as u1','u1.id=a.user_id')->where('a.id',$taskID)->order_by('a.id','DESC')->get();
+		/*echo $this->db->last_query();*/
 		$data = array();
 		if ($query->num_rows() > 0) {
            $data = $query->first_row(); 

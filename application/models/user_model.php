@@ -4,6 +4,7 @@ class user_model extends CI_Model{
 	public $table_history = 'history';
 	public $table_user_page_level = 'user_page_access_level';
 	public $table_assign_lead = 'assign_leads';	
+	public $table_assign_lead_type = 'assign_lead_type';	
 	public $table_lead = 'litigations';
 	public $table_asign_module = 'assign_modules';
 	public $table_module = 'modules';
@@ -11,13 +12,20 @@ class user_model extends CI_Model{
 	public $table_log_time = 'user_logtime';
 	public $table_contact_log = 'user_contact_log';
 	public $table_due_logtime = 'due_logtime';
+	public $table_signature = 'signature';
 	
 	public function __construct() {
 		parent::__construct();
 	}
 	function addUserHistory($data){
-	   $this->db->insert($this->table_history,$data);
-	   return $this->db->insert_id();
+		if($data['lead_id']>0){
+			$checkLeadLogin = $this->db->select('*')->from($this->table_log_time)->where('lead_id',$data['lead_id'])->where('user_id',$data['user_id'])->order_by('id','desc')->get()->row();
+			if(count($checkLeadLogin)>0 && strtotime($checkLeadLogin->login_date)>strtotime($data['create_date'])){
+				$data['create_date'] = date('Y-m-d H:i:s',strtotime('1 seconds',strtotime($checkLeadLogin->login_date)));
+			}
+		}
+		$this->db->insert($this->table_history,$data);
+		return $this->db->insert_id();
 	}
 	
 	function addContactLog($data){
@@ -33,6 +41,20 @@ class user_model extends CI_Model{
 	function update_due_logtime($data,$id){
 		$this->db->where('id', $id);
 		$this->db->update($this->table_due_logtime,$data);
+	}
+	
+	function updateSignature($data,$id){
+		$this->db->where('id', $id);
+		$this->db->update($this->table_signature,$data);
+	}
+	
+	function signature(){
+		$data = array();
+		$query = $this->db->select('*')->from($this->table_signature." as d")->get();
+		if ($query->num_rows() > 0) {  
+			$data = $query->first_row(); 
+		}
+		return $data;
 	}
 	
 	function getDueData($leadID){
@@ -142,23 +164,52 @@ class user_model extends CI_Model{
 		return $getData;
 	}
 	
-	function getMyLogTime($userID,$from,$to){
+	function getMyLogTime($userID,$from,$to,$lead,$activityType){
 		$allWork = array();	
 		/*$query = $this->db->select('login_date, logout_date, TIMEDIFF(logout_date , login_date ) as hrsWorked')->from($this->table_log_time)->where('user_id',$userID)->where('logout_date <> "0000-00-00 00:00:00"')->get();*/
 		$this->db->limit(1000);
 		if(!empty($from) && !empty($to)){
-			$query = $this->db->select('login_date, logout_date, TIMEDIFF(logout_date , login_date ) as hrsWorked, id, actual_hrs, comment,lead_id')->from($this->table_log_time)->where('user_id',$userID)->where('date_format(login_date,"%Y-%m-%d")>="'.$from.'" AND date_format(login_date,"%Y-%m-%d")<="'.$to.'"')->order_by('id','DESC')->get();
+			if(!empty($lead) && (int) $lead>0){
+				$query = $this->db->select('login_date, logout_date, TIMEDIFF(logout_date , login_date ) as hrsWorked, id, actual_hrs, comment,lead_id')->from($this->table_log_time)->where('user_id',$userID)->where('date_format(login_date,"%Y-%m-%d")>="'.$from.'" AND date_format(login_date,"%Y-%m-%d")<="'.$to.'"')->where('lead_id',$lead)->order_by('id','DESC')->get();
+				/*echo $this->db->last_query();*/
+				$queryCurrent = $this->db->select("SEC_TO_TIME(SUM(TIMEDIFF(logout_date , login_date ))) as totalRowHours")->from($this->table_log_time)->where('user_id',$userID)->where('date_format(login_date,"%Y-%m-%d")>="'.$from.'" AND date_format(login_date,"%Y-%m-%d")<="'.$to.'"')->where('logout_date <> "0000-00-00 00:00:00"')->where('lead_id',$lead)->get();
+			} else {
+				$query = $this->db->select('login_date, logout_date, TIMEDIFF(logout_date , login_date ) as hrsWorked, id, actual_hrs, comment,lead_id')->from($this->table_log_time)->where('user_id',$userID)->where('date_format(login_date,"%Y-%m-%d")>="'.$from.'" AND date_format(login_date,"%Y-%m-%d")<="'.$to.'"')->order_by('id','DESC')->get();
+				/*echo $this->db->last_query();*/
+				$queryCurrent = $this->db->select("SEC_TO_TIME(SUM(TIMEDIFF(logout_date , login_date ))) as totalRowHours")->from($this->table_log_time)->where('user_id',$userID)->where('date_format(login_date,"%Y-%m-%d")>="'.$from.'" AND date_format(login_date,"%Y-%m-%d")<="'.$to.'"')->where('logout_date <> "0000-00-00 00:00:00"')->get();
+			}
+			
 		} else {
-			$query = $this->db->select('login_date, logout_date, TIMEDIFF(logout_date , login_date ) as hrsWorked, id, actual_hrs, comment,lead_id')->from($this->table_log_time)->where('user_id',$userID)->order_by('id','DESC')->get();
+			if(!empty($lead) && (int) $lead>0){
+				$query = $this->db->select('login_date, logout_date, TIMEDIFF(logout_date , login_date ) as hrsWorked, id, actual_hrs, comment,lead_id')->from($this->table_log_time)->where('user_id',$userID)->where('lead_id',$lead)->order_by('id','DESC')->get();
+				$queryCurrent = $this->db->select("SEC_TO_TIME(SUM(TIMEDIFF(logout_date , login_date ))) as totalRowHours")->from($this->table_log_time)->where('user_id',$userID)->where('lead_id',$lead)->where('logout_date <> "0000-00-00 00:00:00"')->get();
+			} else {
+				$query = $this->db->select('login_date, logout_date, TIMEDIFF(logout_date , login_date ) as hrsWorked, id, actual_hrs, comment,lead_id')->from($this->table_log_time)->where('user_id',$userID)->where('date_format(login_date,"%Y-%m")>="'.date('Y-m').'"')->order_by('id','DESC')->get();
+				$queryCurrent = $this->db->select("SEC_TO_TIME(SUM(TIMEDIFF(logout_date , login_date ))) as totalRowHours")->from($this->table_log_time)->where('user_id',$userID)->where('date_format(login_date,"%Y-%m")>="'.date('Y-m').'"')->where('logout_date <> "0000-00-00 00:00:00"')->get();
+			}
 		}
 		
 		if ($query->num_rows() > 0) {  
 			foreach ($query->result() as $row) {  
+				$activitiesData = array();
+				if($row->login_date!='0000-00-00 00:00:00' && $row->logout_date !='0000-00-00 00:00:00'){
+					$queryAct = $this->db->select('*')->from($this->table_history)->where('date_format(create_date,"%Y-%m-%d %H:%i:%s")>="'.$row->login_date.'" AND date_format(create_date,"%Y-%m-%d %H:%i:%s")<="'.$row->logout_date.'"')->where('user_id',$userID)->order_by('id','DESC')->get();
+					if($queryAct->num_rows() > 0){
+						foreach ($queryAct->result() as $rowAct) {
+							$activitiesData[] = $rowAct;
+						}  
+					}
+				}
+				$row->activities_record = $activitiesData;
 				$allWork[] = $row; 
 			}
 		}
 		$totalHrsQuery = $this->db->select("SEC_TO_TIME(SUM(TIMEDIFF(logout_date , login_date ))) as totalHrsWorked")->from($this->table_log_time)->where('user_id',$userID)->where('logout_date <> "0000-00-00 00:00:00"')->where('date_format(login_date,"%Y-%m")="'.date('Y-m',strtotime('-1 months',strtotime('now'))).'"')->get();
 		$totalHours = "";
+		$totalThisHours = "";
+		if ($queryCurrent->num_rows() > 0) {  
+			$totalThisHours = $queryCurrent->first_row();
+		}
 		if ($totalHrsQuery->num_rows() > 0) {  
 			$totalHours = $totalHrsQuery->first_row();
 		}
@@ -175,7 +226,7 @@ class user_model extends CI_Model{
 				$allLeadsWorked[] = $row; 
 			}
 		}*/
-		return array('all_work'=>$allWork,'totalHours'=>$totalHours,'totalHoursCurrent'=>$totalHoursCurrent,'allLeadsWorked'=>$allLeadsWorked);
+		return array('all_work'=>$allWork,"resultHours"=>$totalThisHours,'totalHours'=>$totalHours,'totalHoursCurrent'=>$totalHoursCurrent,'allLeadsWorked'=>$allLeadsWorked);
 	}
 	
 	function getMyLogTimeWithLead($userID,$leadID){
@@ -229,7 +280,7 @@ class user_model extends CI_Model{
 	}
 
 	function getAllUserHistory($userID,$leadID=0,$opportunity_id=0){
-		$query = "";	
+		$query = "";			
 		if($leadID==0 && $opportunity_id==0){	
 			$query = $this->db->select('h.*,u.name,u.id as userID,u.profile_pic,l.id as leadID,l.lead_name,l.plantiffs_name,l.type as leadType')->from($this->table_history.' as h')->join($this->table_lead.' as l ', 'l.id=h.lead_id')->join($this->table.' as u','u.id = h.user_id')->where('h.user_id',$userID)->order_by('h.id','DESC')->get();
 		} else if($leadID>0 && $opportunity_id==0){	
@@ -237,6 +288,30 @@ class user_model extends CI_Model{
 		} else {
 			$query = $this->db->select('h.*,u.name,u.id as userID,u.profile_pic,l.id as leadID,l.lead_name,l.plantiffs_name,l.type as leadType')->from($this->table_history.' as h')->join($this->table_lead.' as l ', 'l.id=h.lead_id')->join($this->table_assign_lead.' aa a ', 'a.lead_id=h.lead_id')->join($this->table.' as u','u.id = h.user_id')->where('l.status','2')->where('h.lead_id',$leadID)->order_by('h.id','DESC')->get();
 		}	
+		$data = array();	
+		if ($query->num_rows() > 0) {  
+			foreach ($query->result() as $row) {  
+				$data[] = $row; 
+			}
+		}
+		return $data;
+	}
+	
+	function getUserTimeLineWithSearch($userID,$from,$to,$leadID){
+		$query = "";	
+		if(!empty($from) && !empty($to)){
+			if(!empty($leadID) && (int) $leadID>0){
+				$query = $this->db->select('h.*,u.name,u.id as userID,u.profile_pic,l.id as leadID,l.lead_name,l.plantiffs_name,l.type as leadType')->from($this->table_history.' as h')->join($this->table.' as u','u.id = h.user_id')->join($this->table_lead.' as l ', 'l.id=h.lead_id')->where('h.lead_id',$leadID)->where('h.user_id',$userID)->where('date_format(h.create_date,"%Y-%m-%d")>="'.$from.'" AND date_format(h.create_date,"%Y-%m-%d")<="'.$to.'"')->order_by('h.id','DESC')->get();
+			} else {
+				$query = $this->db->select('h.*,u.name,u.id as userID,u.profile_pic,l.id as leadID,l.lead_name,l.plantiffs_name,l.type as leadType')->from($this->table_history.' as h')->join($this->table.' as u','u.id = h.user_id')->join($this->table_lead.' as l ', 'l.id=h.lead_id')->where('h.user_id',$userID)->where('date_format(h.create_date,"%Y-%m-%d")>="'.$from.'" AND date_format(h.create_date,"%Y-%m-%d")<="'.$to.'"')->order_by('h.id','DESC')->get();
+			}
+		} else {
+			if(!empty($leadID) && (int) $leadID>0){
+				$query = $this->db->select('h.*,u.name,u.id as userID,u.profile_pic,l.id as leadID,l.lead_name,l.plantiffs_name,l.type as leadType')->from($this->table_history.' as h')->join($this->table.' as u','u.id = h.user_id')->join($this->table_lead.' as l ', 'l.id=h.lead_id')->where('h.lead_id',$leadID)->where('h.user_id',$userID)->order_by('h.id','DESC')->get();
+			} else {
+				$query = $this->db->select('h.*,u.name,u.id as userID,u.profile_pic,l.id as leadID,l.lead_name,l.plantiffs_name,l.type as leadType')->from($this->table_history.' as h')->join($this->table.' as u','u.id = h.user_id')->join($this->table_lead.' as l ', 'l.id=h.lead_id')->where('h.user_id',$userID)->order_by('h.id','DESC')->get();
+			}
+		}
 		$data = array();	
 		if ($query->num_rows() > 0) {  
 			foreach ($query->result() as $row) {  
@@ -322,7 +397,10 @@ class user_model extends CI_Model{
 		return $this->db->insert_id();
 	}
 	
-	
+	public function insert_assign_lead_type($data)  {
+		$this->db->insert($this->table_assign_lead_type,$data);
+		return $this->db->insert_id();
+	}
 	
 	public function insert_assign_lead($data){
 		$this->db->insert($this->table_assign_lead,$data);
@@ -337,6 +415,11 @@ class user_model extends CI_Model{
 	public function delete_assign_lead($userID){
 		$this->db->where('pd_id', $userID);
 		$this->db->delete($this->table_assign_lead);
+	}
+	
+	public function delete_assign_lead_type($userID){
+		$this->db->where('user_id', $userID);
+		$this->db->delete($this->table_assign_lead_type);
 	}
 	
 	public function delete($userID){
@@ -364,7 +447,7 @@ class user_model extends CI_Model{
 	}
 	
 	public function findIncompleteANDCompleteList(){
-		 $query = $this->db->select('id,lead_name')->from($this->table_lead)->where("status IN ('0','1','2')")->get();
+		 $query = $this->db->select('id,lead_name,type,user_id,create_date')->from($this->table_lead)->where("status IN ('0','1','2')")->get();
 		$data = array();
 		if($query->num_rows()>0){
 			foreach ($query->result() as $row) {
@@ -376,6 +459,17 @@ class user_model extends CI_Model{
 	
 	public function getUserLeadList($userID){
 		$query = $this->db->select('lead_id')->from($this->table_assign_lead)->where('pd_id',(int)$userID)->get();
+		$data = array();
+		if ($query->num_rows() > 0) {
+            foreach ($query->result() as $row) {
+                $data[] = $row;
+            }            
+        }
+		return $data;
+	}
+	
+	public function getUserLeadType($userID){
+		$query = $this->db->select('lead_type')->from($this->table_assign_lead_type)->where('user_id',(int)$userID)->get();
 		$data = array();
 		if ($query->num_rows() > 0) {
             foreach ($query->result() as $row) {

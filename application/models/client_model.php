@@ -6,6 +6,9 @@ class client_model extends CI_Model{
 	public $table_company = 'company';
 	public $table_customers = 'customers';
 	public $table_company_sector = 'company_sector';
+	public $table_preference = 'preferences';
+	public $table_category = 'category';
+	public $table_invitees = 'invitees';
 	function __construct() {
 		parent::__construct();
 	}
@@ -23,6 +26,17 @@ class client_model extends CI_Model{
 	
 	function getAllClients(){
 		$query = $this->db->select('*')->from($this->table)->order_by('name','ASC')->get();
+		$data = array();
+		if ($query->num_rows() > 0) {
+            foreach ($query->result() as $row) {
+                $data[] = $row;
+            }            
+        }
+		return $data;
+	}
+	
+	function findMissingSpotsContacts(){
+		$query = $this->db->select('c.first_name,c.last_name,c.job_title,co.company_name,c.email,c.phone,c.linkedin_url')->from($this->table.' as c')->join($this->table_company.' as co','co.id = c.company_id')->where('c.email','')->or_where('c.linkedin_url','')->or_where('c.phone','')->order_by('first_name','ASC')->get();
 		$data = array();
 		if ($query->num_rows() > 0) {
             foreach ($query->result() as $row) {
@@ -84,17 +98,41 @@ class client_model extends CI_Model{
 		return $queryMySend;
 	}
 	
-	function getAllCompaniesWithMem(){
-		$query = $this->db->select("co.*,s.id as sectorID, s.name as sectorName, (SELECT COUNT(id) FROM ".$this->table_customers." as cus  WHERE cus.company_id = co.id) as userCount")->from($this->table_company.' as co')->join($this->table_company_sector.' as cs', 'co.id = cs.company_id','left')->join($this->table_sector.' as s', 's.id = cs.sector_id','left')->order_by('co.company_name','ASC')->get();
+	function getAllCompaniesWithMem($leadID = 0){
+		if($leadID==0){
+			$query = $this->db->select("co.*,s.id as sectorID, s.name as sectorName, (SELECT COUNT(id) FROM ".$this->table_customers." as cus  WHERE cus.company_id = co.id) as userCount")->from($this->table_company.' as co')->join($this->table_company_sector.' as cs', 'co.id = cs.company_id','left')->join($this->table_sector.' as s', 's.id = cs.sector_id','left')->order_by('co.company_name','ASC')->get();
+		} else {
+			$query = $this->db->select("co.*,s.id as sectorID, s.name as sectorName, (SELECT COUNT(id) FROM ".$this->table_customers." as cus  WHERE cus.company_id = co.id) as userCount")->from($this->table_company.' as co')->join($this->table_invitees.' as i','co.id=i.contact_id')->join($this->table_company_sector.' as cs', 'co.id = cs.company_id','left')->join($this->table_sector.' as s', 's.id = cs.sector_id','left')->where("i.lead_id",$leadID)->order_by('co.company_name','ASC')->get();
+		}		
 		$data = array();
 		if ($query->num_rows() > 0) {
             foreach ($query->result() as $row) {
 				$usersList = $this->getAllContactBelongToCompany($row->id);
+				$departments = $this->findMyPreferenceWithName($row->id);
+				$deptNames = "";
+				if(count($departments)>0){
+					foreach($departments as $deptt){
+						$deptNames .= $deptt->name.", ";
+					}
+					$deptNames= substr($deptNames,0,-1);
+				}
 				$row->company_users = $usersList;
+				$row->department_names = $deptNames;
 				$data[] = $row;
             }            
         }		
 		return $data;
+	}
+	
+	public function findMyPreferenceWithName($customerID){
+		$query = $this->db->select("c.*")->from($this->table_preference.' as p')->join($this->table_category.' as c','c.id = p.preference_id')->where("p.customer_id",$customerID)->get();
+		$data = array();
+		if ($query->num_rows() > 0) {
+            foreach ($query->result() as $row) {
+                $data[] = $row;
+            }
+        }
+		return $data; 
 	}
 	
 	function getAllContactBelongToCompany($companyID){
