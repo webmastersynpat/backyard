@@ -26,23 +26,65 @@ class Customers extends CI_Controller {
 		die;
 	}
 	
-	public function campaign(){
-		$data = array(); 
+	public function free_precontacts(){	
+		$data = array();
 		if(isset($_POST) && count($_POST)>0){
-			$data = $this->lead_model->getCampaign($_POST['id'],$_POST['campaign_type']);
+			if(!empty($this->input->post('text'))){
+				$saveData = array('message'=>$this->input->post('text'));
+				$data = $this->lead_model->insertFreePreContacts($saveData);
+			}
+		}
+		echo $data;
+		die;
+	}
+	
+	public function litigation_scrap(){	
+		$data = array();
+		if(isset($_POST) && count($_POST)>0){
+			if(!empty($this->input->post('text')) && !empty($this->input->post('url'))){
+				$saveData = array('data'=>$this->input->post('text'),'url'=>$this->input->post('url'));
+				$data = $this->lead_model->insertLitigationScrap($saveData);
+			}
+		}
+		echo $data;
+		die;
+	}
+	
+	public function campaign(){
+		$data = array('email'=>array(),'linked_in'=>array()); 
+		if(isset($_POST) && count($_POST)>0){
+			if((int)$_POST['id']>0){
+				$data = $this->lead_model->getCampaign($_POST['id'],$_POST['campaign_type']);
+			}else{
+				$data['email'] = $this->lead_model->getCampaign($_POST['id'],1);
+				$data['linked_in'] = $this->lead_model->getCampaign($_POST['id'],2);
+			}
 		}
 		echo json_encode($data);
 		die;
 	}
 	
+	public function delete_address_from_campaign(){
+		$data = 0;
+		if(isset($_POST) && count($_POST)>0){
+			$campaignID = $_POST['campaign_id'];
+					$to = $_POST['to'];
+			$data = $this->lead_model->delete_address_from_campaign($campaignID,$to);
+		}
+		echo $data;
+		die;
+	}
+	
 	public function start_campaign(){
 		$campaign_id = 0; 
+		
 		if(isset($_POST) && count($_POST)>0){
 			$campaign = json_decode($_POST['campaign_data'],true);
 		  $personList = explode(',',$campaign['person']);
 			 $company = explode(',',$campaign['company']);
 		   $emailList = explode(',',$campaign['email']);
 			   $campaign_id = $this->lead_model->insertCampaign(array("lead_id"=>$campaign['lead_id'],"lead_name"=>$campaign['lead_name'],"campaign_type"=>$campaign['campaign_type'],"template_file"=>$campaign['template_file'],"user_id"=>$campaign['user_id'],"subject"=>$campaign['subject'],"body"=>$campaign['body'],"start_date"=>$campaign['start_date']));
+			  
 			   if($campaign_id>0){				   
 				  if(count($emailList)>0){
 					   for($i=0;$i<count($emailList);$i++){
@@ -70,10 +112,132 @@ class Customers extends CI_Controller {
 	function update_pre_contacts(){
 		$data = 0; 
 		if(isset($_POST) && count($_POST)>0){
-			$saveData = array('first_name'=>$_POST['first_name'],'last_name'=>$_POST['last_name'],'email'=>$_POST['email'],'company_name'=>$_POST['company'],'profile_url'=>$_POST['url'],'c_c'=>$_POST['c_c'],'job_title'=>$_POST['job_title']);
-			$data = $this->lead_model->updatePreContacts($saveData,$_POST['id']);
+			if($_POST['t']=='pre-contact'){
+				$saveData = array('first_name'=>$_POST['first_name'],'last_name'=>$_POST['last_name'],'email'=>$_POST['email'],'company_name'=>$_POST['company'],'profile_url'=>$_POST['url'],'address'=>$_POST['address'],'job_title'=>$_POST['job_title'],'telephone'=>$_POST['telephone'],'cellphone'=>$_POST['phone']);
+				$data = $this->lead_model->updatePreContacts($saveData,$_POST['id']);
+			} else if($_POST['t']=='contact'){
+				$saveData = array('first_name'=>$_POST['first_name'],'last_name'=>$_POST['last_name'],'email'=>$_POST['email'],'linkedin_url'=>$_POST['url'],'address'=>$_POST['address'],'job_title'=>$_POST['job_title'],'telephone'=>$_POST['telephone'],'phone'=>$_POST['phone']);
+				$data = $this->lead_model->updateContact($saveData,$_POST['id']);
+			}
 		}
 		echo $data;
+		die;
+	}
+	
+	function save_process_campaign(){
+		$data = 0;
+		if(isset($_POST) && count($_POST)>0){			
+			if(isset($_POST['lead_id']) && (int)$_POST['lead_id']>0){
+				if(isset($_POST['to'])){
+					$to = trim($_POST['to']);
+					if(!empty($to)){
+						$checkCampaign = $this->lead_model->checkCampaignProcess($this->input->post('campaign_id'));
+						if($checkCampaign==0){
+							$data = $this->lead_model->insertCampaignProcess($this->input->post());
+						}						
+					}
+				}
+			}
+		}
+		echo $data;
+	}
+	
+	function findEmailImapSearch(){
+		$folder = '[Gmail]/Sent Mail';
+		$emailAddress = 'webmaster@synpat.com';
+		$time = date('D, d M Y',strtotime('-5 days',strtotime('now')));
+		$data = array('send'=>0);
+		$hostname = 'imap.gmail.com:993';
+		$this->config->load('config');
+		$params = array('mailbox'=>$hostname,'username'=>$this->config->item('license_email'),'password'=>$this->config->item('license_password'),'encryption'=>'ssl','folder'=>$folder);
+		$this->load->library('Imap',$params);
+		$s = 0;
+		if($this->imap->isConnected()){
+			/*$this->imap->selectFolder('[Gmail]/Sent Mail');*/
+			/*$messages = $this->imap->getMessages();*/
+			echo $q = "TO (".$emailAddress.") SINCE  ".$time."  00:00:00";
+			$messages = $this->imap->imapSearch($q);
+			echo "<pre>";
+			print_r($messages);
+		}
+		die;
+	}
+	
+	function findEmailImapSendBox($subject,$toUsers,$date,$leadID,$type=1,$sendFrom =0,$userID){
+		$data = array('send'=>0);
+		$hostname = 'imap.gmail.com:993';
+		$this->config->load('config');
+		$params = array('mailbox'=>$hostname,'username'=>$this->config->item('license_email'),'password'=>$this->config->item('license_password'),'encryption'=>'ssl');
+		$this->load->library('Imap',$params);
+		$s = 0;
+		$mainMessage=array();
+		if($this->imap->isConnected()){
+			$this->imap->selectFolder('[Gmail]/Sent Mail');
+			$messages = $this->imap->getMessages();
+			if(count($messages)>0){
+				for($m=count($messages)-1;$m>=0;$m--){
+					if($messages[$m]['subject']==$subject){						
+						$toSendBox = $messages[$m]['to'];
+						foreach($toSendBox as $to){
+							if(count($toUsers)>0){
+								for($i=0;$i<count($toUsers)-1;$i++){
+									if(!empty(trim($toUsers[$i])) == trim($to)){
+										$s = $s +1;
+									}
+								}
+							}
+						}
+						if($s == count($toSendBox)){
+							$mainMessage=$messages[$m];
+							break; 
+						}
+					}
+				}
+			}
+		}
+		if($s>0 && $mainMessage>0){
+			$attachmentsConnect = array();
+			$filesAttachment = "";
+			if(isset($mainMessage['attachments']) && count($mainMessage['attachments'])>0){
+				$a = 0;
+				foreach($mainMessage['attachments'] as $attachment){
+					$filename = $attachment['name'];
+					$attachmentBody = $this->imap->getAttachment($mainMessage['uid'],$a);
+					if(isset($attachmentBody['content'])&& !empty($attachmentBody['content'])){
+						$fh = fopen($_SERVER['DOCUMENT_ROOT'].'/public/upload/'.$filename, "w+");
+						fwrite($fh, $attachmentBody['content']);
+						fclose($fh);
+						$finfo = finfo_open(FILEINFO_MIME_TYPE); 
+						$mimeType = finfo_file($finfo, $_SERVER['DOCUMENT_ROOT'].'/public/upload/'.$filename);
+						$filesAttachment .=$this->config->base_url()."public/upload/".$filename.",";
+						$attachmentsConnect[] = array('filename'=>$_SERVER['DOCUMENT_ROOT'].'/public/upload/'.$filename,'mimeType'=>$mimeType,"attachmentId"=>$a,"size"=>$attachmentBody['size']);
+					}
+					$a++;
+				}
+			}
+			$mainMessage['attachments'] = $attachmentsConnect;
+			$saveData = array('content'=>json_encode($mainMessage),'file_attach'=>$filesAttachment,"lead_id"=>$leadID,"user_id"=>$userID,"date_received"=>date('Y-m-d H:i:s', strtotime($mainMessage['date'])),'type'=>1,'sent_from'=>1,'account_type'=>'2');
+			$sendData = $this->lead_model->insertBox($saveData);
+			if($sendData>0){
+				$data = array('send'=>$sendData);
+			}
+		}
+		return json_encode($data);
+	}
+	
+	public function update_campaign_addresss_send(){
+		$data = 0; 
+		if(isset($_POST) && count($_POST)>0){
+			if(isset($_POST['campaign_id']) && (int)$_POST['campaign_id']>0){
+				if(isset($_POST['to'])){
+					$to = trim($_POST['to']);
+					if(!empty($to)){
+						$data = $this->lead_model->updateCampaignList($_POST['campaign_id'],$to,array('send'=>1));
+					}
+				}
+			}
+		}
+		echo $data ;
 		die;
 	}
 	
@@ -92,6 +256,7 @@ class Customers extends CI_Controller {
 							$getContact = $this->client_model->find_contact_by_linkedin($to);
 							$message = "Sales activity for linkedin.";
 						}
+						
 						if(count($getContact)){
 							$note = '';
 							$subject = '';
@@ -104,15 +269,28 @@ class Customers extends CI_Controller {
 							if(isset($_POST['file_html']) && !empty($_POST['file_html'])){
 								$note = $note."<br/><a href='".$_POST['file_html']."' target='_blank' style='color:#2196f3'>File</a>";
 							}
-							$saveData = array('lead_id'=>$_POST['lead_id'],'company_id'=>$getContact->company_id,'contact_id'=>$getContact->id,'type'=>$_POST['type'],'note'=>$note,'user_id'=>$_POST['user_id'],'subject'=>$subject,'activity_date'=>date('Y-m-d H:i:s'));	
 							
+							$date = date('Y-m-d H:i:s');
+							$email_id = 0 ;
+							if((int)$_POST['type']==3){
+								$send = $this->findEmailImapSendBox($subject,array($to,""),$date,$_POST['lead_id'],1,1,$_POST['user_id']);
+								$dataSend = json_decode($send,true);
+								if(isset($dataSend['send'])){
+									$email_id = $dataSend['send'];
+								} else if(isset($dataSend->send)){
+									$email_id = $dataSend->send;
+								}
+							}
+							$saveData = array('lead_id'=>$_POST['lead_id'],'company_id'=>$getContact->company_id,'contact_id'=>$getContact->id,'type'=>$_POST['type'],'note'=>$note,'user_id'=>$_POST['user_id'],'subject'=>$subject,'activity_date'=>$date,"email_id"=>$email_id);		
+						
 							if((int)$_POST['main_activity']==2){
 								$data = $this->lead_model->insertAcquistionActivity($saveData);
 							} else {
+								/*$saveData['note'] = '<div>'.$note.'</div>';*/
 								$data = $this->lead_model->insetSalesActivity($saveData);
 							}
 							if($data>0){
-								$this->lead_model->updateCampaignList($_POST['campaign_id'],$to);								
+								$this->lead_model->updateCampaignList($_POST['campaign_id'],$to,array('send'=>1,'proccessed'=>1));
 								$user_history = array('lead_id'=>$_POST['lead_id'],'user_id'=>$_POST['user_id'],'message'=>$message,'opportunity_id'=>0,'create_date'=>date('Y-m-d H:i:s'));
 								$this->user_model->addUserHistory($user_history);
 							}							
@@ -124,6 +302,8 @@ class Customers extends CI_Controller {
 		echo $data;
 		die;
 	}
+	
+	
 	
 	function docketDocumentSalesActivity(){
 		$data = array("error"=>1,"id"=>0,"message"=>"Server busy, Please try after sometime.");
@@ -648,6 +828,107 @@ class Customers extends CI_Controller {
 		}
 		echo json_encode($data,true);
 		die;
+	}
+	
+	public function last_page_no(){
+		$resultOver = $this->general_model->getCountInsertedData();
+		echo $resultOver + 1;
+		die;
+	}
+	
+	public function extension_linkedin_scrap(){
+		$data = array('page_no'=>0,'saved'=>0);
+		if(isset($_POST) && count($_POST)>0){
+			$scrap = $this->input->post('scrap');
+			$saved = 0;
+			if(!empty($scrap)){
+				$result = json_decode($scrap);
+				if(count($result)>0){
+					for($i=0;$i<count($result);$i++){
+						$record = array("name"=>(string)$result[$i]->name,"company_name"=>(string)$result[$i]->company_name,"job_title"=>(string)$result[$i]->job_title,"profile_url"=>(string)$result[$i]->profile_url,"c_c"=>(int)$result[$i]->c_c,"distance"=>(int)$result[$i]->distance);
+						$saved = $this->general_model->insertLinkedinContacts($record);
+					}
+				}
+			}
+			$this->general_model->updatePageNo(1,array('page_no'=>$this->input->post('page_no')));
+			$resultOver = $this->general_model->getCountInsertedData();
+			$data = array('page_no'=>$resultOver+1,'saved'=>$saved);
+		}
+		echo json_encode($data);
+		die;
+	}
+	
+	function bounce_email(){
+		$fileName = $_SERVER['DOCUMENT_ROOT'].'/public/upload/bounce.json';
+		$f = fopen($fileName,"w+");
+		$data= $_POST;
+		fwrite($f,json_encode($data));
+		fclose($f);
+		if($data['event']=="dropped"){
+			$messageID = $data['Message-Id'];
+			$this->load->model('outsource_model');
+			$checkDropEmail = $this->outsource_model->checkProjectDataWithMessageID($messageID);
+			if(count($checkDropEmail)>0){
+				$this->outsource_model->updateFormData(array('data'=>'','enter_by'=>'Free','user_id'=>0,'recorded_date'=>'0000-00-00 00:00:00','message_id'=>''),$checkDropEmail->id);
+				/*$this->load->model('client_model');*/
+				unset($checkDropEmail->id);
+				$this->outsource_model->uploadDataToDropHistory($checkDropEmail);
+				$this->client_model->update($checkDropEmail->contact_id,array('email'=>'','new_email'=>0));
+			}
+		}		
+		die;
+	}
+	
+	public function changePhoneFormating(){
+		$allContacts = $this->client_model->getAllContacts();
+		foreach($allContacts as $contact){
+			$phone = $contact->phone;			
+			$originalPhone = $phone;			
+			/*$phone = str_replace('+','',$phone);
+			$phone = str_replace('(','',$phone);
+			$phone = str_replace(')','',$phone);
+			$phone = str_replace('-','',$phone);
+			$phone = str_replace('.','',$phone);
+			$phone = str_replace(' ','',$phone);
+			if(strlen($phone)==10){
+				$phone = '+1'.$phone;
+			} else if(strlen($phone)>10){
+				$phone = '+'.$phone;
+			}*/
+			$telephone = $contact->telephone;			
+			$originalTelephone = $telephone;
+			/*$telephone = str_replace('+','',$telephone);
+			$telephone = str_replace('(','',$telephone);
+			$telephone = str_replace(')','',$telephone);
+			$telephone = str_replace('-','',$telephone);
+			$telephone = str_replace('.','',$telephone);
+			$telephone = str_replace(' ','',$telephone);
+			if(strlen($telephone)==10){
+				$telephone = '+1'.$telephone;
+			} else if(strlen($telephone)>10){
+				$telephone = '+'.$telephone;
+			}
+			if(!empty($phone)){
+				$phoneAll = substr($phone,0,-4);
+				$phoneFormat = substr($phone,strlen($phone)-4);
+				$phone = $phoneAll." ".$phoneFormat;
+				$phoneAll = substr($phone,0,-8);
+				$phoneFormat = substr($phone,strlen($phone)-8);
+				$phone = $phoneAll." ".$phoneFormat;
+				$phone = trim($phone);
+			}
+			if(!empty($telephone)){
+				$phoneAll = substr($telephone,0,-4);
+				$phoneFormat = substr($telephone,strlen($telephone)-4);
+				$telephone = $phoneAll." ".$phoneFormat;
+				$phoneAll = substr($telephone,0,-8);
+				$phoneFormat = substr($telephone,strlen($telephone)-8);
+				$telephone = $phoneAll." ".$phoneFormat;
+				$telephone = trim($telephone);
+			}
+			$this->lead_model->updateContact(array('phone'=>$phone,'telephone'=>$telephone),$contact->id);*/
+			echo "Name: ".$contact->first_name." ".$contact->last_name."<br/>----Orginal".$originalPhone."<br/>---- Phone: ".$phone." <br/>----Original Telephone".$originalTelephone."<br/>---- Telephone: ".$telephone."<br/>";
+		}
 	}
 }
 /* End of file customers.php */

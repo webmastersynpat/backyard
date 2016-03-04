@@ -38,7 +38,7 @@ class General extends CI_Controller {
 						$this->session->set_flashdata('message','<p class="alert alert-success">Please try after sometime.</p>');
 					}
 				} else {
-					$sector = $this->general_model->updateSector($_POST['sector'],$_POST['sector']['id']);
+					$sector = $this->general_model->updateSector($_POST['sector']['id'],$_POST['sector']);
 				}				
 			}
 		}
@@ -56,7 +56,7 @@ class General extends CI_Controller {
 						$this->session->set_flashdata('message','<p class="alert alert-success">Please try after sometime.</p>');
 					}
 				} else {
-					$category = $this->general_model->updateCategory($_POST['category'],$_POST['category']['id']);
+					$category = $this->general_model->updateCategory($_POST['category']['id'],$_POST['category']);
 				}				
 			}
 		}
@@ -420,27 +420,32 @@ class General extends CI_Controller {
 			/*Delete User Old Page Level*/
 			$this->user_model->delete_module($pagesData['user_id']);
 			$this->user_model->delete_assign_lead($pagesData['user_id']);
+			$this->user_model->delete_assign_lead_type($pagesData['user_id']);
 			/*End Delete*/
 			$saveID = 0;
-			foreach($pagesData['lead_id'] as $page){
-				$saveID = $this->user_model->insert_assign_lead(array('pd_id'=>$pagesData['user_id'],'lead_id'=>$page));
+			if(isset($pagesData['lead_id'])){
+				foreach($pagesData['lead_id'] as $page){
+					$saveID = $this->user_model->insert_assign_lead(array('pd_id'=>$pagesData['user_id'],'lead_id'=>$page));
+				}
 			}
-			foreach($pagesData['module_id'] as $page){
-				$saveID = $this->user_model->insert_module(array('user_id'=>$pagesData['user_id'],'module_id'=>$page));
+			if(isset($pagesData['module_id'])){
+				foreach($pagesData['module_id'] as $page){
+					$saveID = $this->user_model->insert_module(array('user_id'=>$pagesData['user_id'],'module_id'=>$page));
+				}
 			}
+			if(isset($pagesData['type'])){
+				foreach($pagesData['type'] as $page){
+					$saveID = $this->user_model->insert_assign_lead_type(array('user_id'=>$pagesData['user_id'],'lead_type'=>$page));
+				}
+			}
+			
 			if($saveID>0){
 				$this->session->set_flashdata('message','<p class="alert alert-success">Record Saved!</p>');					
 			} else {
 				$this->session->set_flashdata('message','<p class="alert alert-danger">Please try after sometime!</p>');
-			}
-			redirect('general/user_permissions');			
+			}	
 		}
-		$this->layout->title_for_layout = 'Backyard User Permission';
-		$data = array();
-		$data['users'] = $this->user_model->getAllUsers();
-		$data['pages_list'] = $this->general_model->getPagesList();
-		$data['leads'] = $this->user_model->findIncompleteANDCompleteList();		
-		$this->layout->render('general/user_permissions',$data);
+		redirect('general/add_user');	
 	}
 
 	public function useractivities(){
@@ -477,17 +482,50 @@ class General extends CI_Controller {
 	public function add_user(){
 		if(isset($_POST) && count($_POST)>0){
 			$userData = $this->input->post();
-			$createUser = $this->simpleloginsecure->create($userData['user']['name'],$userData['user']['email'],$userData['user']['password'],$userData['user']['phone_number'],$userData['user']['type'],false);
-			if($createUser===true){
-				$this->session->set_flashdata('message','<p class="alert alert-success">Record Saved!</p>');
+			if($userData['user']['id']==0){
+				$createUser = $this->simpleloginsecure->create($userData['user']['name'],$userData['user']['email'],$userData['user']['password'],$userData['user']['phone_number'],$userData['user']['type'],$userData['user']['direct_number'],$userData['user']['title'],$userData['user']['ext'],$userData['user']['flag'],false);
+				if($createUser===true){
+					$this->session->set_flashdata('message','<p class="alert alert-success">Record Saved!</p>');
+				} else {
+					$this->session->set_flashdata('message','<p class="alert alert-danger">Please try after sometime!</p>');
+				}
 			} else {
-				$this->session->set_flashdata('message','<p class="alert alert-danger">Please try after sometime!</p>');
-			}
+				$password = $userData['user']['password'];
+				unset($userData['user']['password']);
+				$this->user_model->updateUserData($userData['user'],$userData['user']['id']);
+				$user = $this->user_model->getUserData($userData['user']['id']);
+				$profilePic ="";
+				if(!empty($password)){
+					if(count($user) && isset($user->profile_pic)){
+						$profilePic = $user->profile_pic;
+					}
+					$this->simpleloginsecure->update($userData['user']['id'], $password,$profilePic,$userData['user']['phone_number'], false); 
+				}				
+				if(count($user) && isset($user->id)){
+					$this->session->set_flashdata('message','<p class="alert alert-success">Record Updates!</p>');
+				} else {
+					$this->session->set_flashdata('message','<p class="alert alert-danger">Please try after sometime!</p>');
+				}
+			}			
 			redirect('general/add_user');			
 		}
 		$data['user_list'] = $this->user_model->getAllUsersIncAdmin();
+		$data['users'] = $this->user_model->getAllUsers();
+		$data['pages_list'] = $this->general_model->getPagesList();
+		$data['leads'] = $this->user_model->findIncompleteANDCompleteList();	
+		$data['signature'] = $this->user_model->signature();	
 		$this->layout->title_for_layout = 'Backyard Add User';
 		$this->layout->render('general/add_user',$data);
+	}
+	
+	public function signature(){
+		if(isset($_POST) && count($_POST)>0){
+			$userData = $this->input->post('signature');
+			if($userData['id']>0){
+				$this->user_model->updateSignature(array('signature'=>$userData['signature']),$userData['id']);
+			}
+		}
+		redirect('general/add_user');
 	}
 
 	public function manage_leads(){
@@ -730,6 +768,7 @@ class General extends CI_Controller {
 		if($token && !empty($token)){
 			$data['module'] = $this->user_model->getUserModuleList($token);
 			$data['leads'] = $this->user_model->getUserLeadList($token);
+			$data['leads_type'] = $this->user_model->getUserLeadType($token);
 		}
 		echo json_encode($data);
 		die;
@@ -819,6 +858,7 @@ class General extends CI_Controller {
 					'due_diligence_tab'=>$this->input->post('due_diligence_text'),
 					'claim_chart_tab'=>$this->input->post('claim_chart_text'),
 					'impact_tab'=>$this->input->post('impact_text'),					
+					'price_tab'=>$this->input->post('price_text'),					
 				)
 			));
 			// Send the request & save response to $resp
@@ -974,7 +1014,7 @@ class General extends CI_Controller {
         $data['proactive'] = $this->general_model->getAllButtonList('General');        
         $data['non'] = $this->general_model->getAllButtonList('NON');        
         $data['int'] = $this->general_model->getAllButtonList('INT');        
-        $data['doc'] = $this->general_model->getAllButtonList('DOCKET');        
+        $data['doc'] = $this->general_model->getAllButtonList('DOCKET');
     	$this->layout->title_for_layout = 'Backyard Button Boxes';    
     	$this->layout->render('general/button_boxes',$data);            
 	}
@@ -1046,7 +1086,8 @@ class General extends CI_Controller {
 	
 	public function modifyUser($userID,$status){
 		$this->user_model->change_status($userID,$status);
-		redirect('general/add_user');
+		die;
+		//redirect('general/add_user');
 	}
 	
 	public function user_activities(){		

@@ -34,19 +34,158 @@ class Opportunity extends CI_Controller {
         $this->output->set_header("Pragma: no-cache");
     }
 	*/
+	/*
+	function generate_comparables_pdf(){
+		
+		$links = array('http://www.sec.gov/Archives/edgar/containers/fix068/855683/000112528206002245/b412754ex10_10.txt','http://www.sec.gov/Archives/edgar/containers/fix049/1081197/000089161899001414/0000891618-99-001414.txt','http://www.sec.gov/Archives/edgar/data/1096325/000088981200003853/0000889812-00-003853-0001.txt','http://www.sec.gov/Archives/edgar/data/1074828/000119983514000047/exhibit_10-52.htm','http://www.sec.gov/Archives/edgar/data/1386262/000114036109009648/form10k.htm','http://www.sec.gov/Archives/edgar/containers/fix061/1107947/0001005477-00-002036.txt','http://www.sec.gov/Archives/edgar/data/1322705/000119312505187045/dex106.htm','http://www.sec.gov/Archives/edgar/data/1322705/000119312505187045/dex107.htm','http://www.sec.gov/Archives/edgar/data/1381272/000119312506261688/dex1010.htm');
+		$links = array('http://www.sec.gov/Archives/edgar/containers/fix068/855683/000112528206002245/b412754ex10_10.txt');
+		$curl = curl_init();
+		$postData = array('links'=>$links,'paper'=>"letter",'orientation'=>"portrait");
+		echo "<pre>";
+		print_r($postData);
+		die;
+		
+		curl_setopt_array($curl, array(
+			CURLOPT_RETURNTRANSFER => 1,
+			CURLOPT_URL => 'http://synpat.com/generate_pdf/generate_pdf.php',
+			CURLOPT_USERAGENT => 'Send Request for create demo portfolio',
+			CURLOPT_POST => 1,
+			CURLOPT_POSTFIELDS => array(
+				'data' => json_encode($postData)
+			)
+		));
+		
+		$resp = curl_exec($curl);
+		echo $resp;
+		die;
+		$fh = fopen($_SERVER['DOCUMENT_ROOT'].'/public/upload/comparables.pdf', "w+");
+		fwrite($fh, $resp);
+		fclose($fh);
+		echo $_SERVER['DOCUMENT_ROOT'].'/public/upload/comparables.pdf';
+		die;
+		echo "<pre>";
+		print_r($resp);
+		die;
+	}*/
+	
+	public function google_contact(){
+		$data = array();
+		$this->load->library('DriveServiceHelper');
+		$gmailContact = new GmailServiceHelper();
+		if(!isset($_SESSION)){
+			session_start();
+		}
+		if($gmailContact->checkExpiredToken()){
+			if($_SESSION['another_access_token']!=""){
+				$google_token= json_decode($_SESSION['another_access_token']);
+				if(isset($google_token->refresh_token)){						
+					$gmailContact->refreshToken($google_token->refresh_token);
+					$newToken = json_decode($gmailContact->getAccessToken());
+					$google_token->id_token = $newToken->id_token;
+					$google_token->access_token = $newToken->access_token;
+					$google_token->created = $newToken->created;
+					$google_token = json_encode($google_token);						
+					$_SESSION['another_access_token'] = $google_token;
+					$_SESSION['access_token'] = $google_token;
+				}	
+			}
+		}			
+		$gmailContact->setAccessToken($_SESSION['another_access_token']);
+		$allFeed = $gmailContact->getAllContacts();		
+		try{
+			if(count($allFeed)>0){
+				$pathInclude = get_include_path().PATH_SEPARATOR;
+				set_include_path($pathInclude.$_SERVER['DOCUMENT_ROOT']."/application/libraries/ZendGdata-1.12.9/library");
+				$this->load->library('Google_Contact');
+				$feed = new Zend_Gdata_App_Feed();
+				$feed->setMajorProtocolVersion(null);
+				$feed->setMinorProtocolVersion(null);
+				$feed->transferFromXML($allFeed);
+				$feed->setHttpClient(new Zend_Http_Client());
+				$results = array();				
+				foreach($feed as $entry){
+					$xml = simplexml_load_string($entry->getXML());	
+					
+					$obj = new stdClass;
+					$obj->id = $entry->getEditLink()->href;
+					$obj->name = (string) $entry->title;
+					$obj->orgName = (string) $xml->organization->orgName; 
+					$obj->orgTitle = (string) $xml->organization->orgTitle; 
+					foreach ($xml->email as $e) {
+					  $obj->emailAddress[] = (string) $e['address'];
+					}
+					
+					if(isset($xml->userDefinedField)){
+						foreach($xml->userDefinedField as $e){
+							$obj->sectors[] = (string) $e['value'];
+						}
+					} else {
+						$obj->sectors = "";
+					}
+					foreach ($xml->phoneNumber as $p) {
+					  $obj->phoneNumber[] = (string) $p;
+					}
+					foreach ($xml->website as $w) {
+					  $obj->website[] = (string) $w['href'];
+					}
+					$results[] = $obj;  
+				}
+				$data['contacts'] = $results;
+			}
+		} catch(Exception $e){
+			
+		}
+		$this->layout->layout='opportunity';	
+		$this->layout->title_for_layout = 'Backyard Opportunity List';
+		$this->layout->render('opportunity/google_contact',$data);
+	}
+	
+	
+	function full_copy( $source, $target ) {
+		if ( is_dir( $source ) ) {
+			if(!is_dir($target)){
+				@mkdir( $target );
+			}			
+			$d = dir( $source );
+			while ( FALSE !== ( $entry = $d->read() ) ) {
+				if ( $entry == '.' || $entry == '..' ) {
+					continue;
+				}
+				$Entry = $source . '/' . $entry; 
+				if ( is_dir( $Entry ) ) {
+					$this->full_copy( $Entry, $target . '/' . $entry );
+					continue;
+				}
+				copy( $Entry, $target . '/' . $entry );
+			}
+
+			$d->close();
+		}else {
+			copy( $source, $target );
+		}
+	}
+	
 	
 	public function getStoreDIRList(){
-		$dir = $_SERVER['DOCUMENT_ROOT'].'/../store/';
-		$directoryList = scandir($dir);
-		$sourceFileContent = file_get_contents($_SERVER['DOCUMENT_ROOT'].'/../store/12345/index.php');
-		for($i=2;$i<count($directoryList);$i++){
-			if($directoryList[$i]!='12345'){
-				if(is_dir($_SERVER['DOCUMENT_ROOT'].'/../store/'.$directoryList[$i])){
-					$destinationFile = $_SERVER['DOCUMENT_ROOT'].'/../store/'.$directoryList[$i].'/index.php';
-					file_put_contents($destinationFile,$sourceFileContent);
+		$storeDirectories = array('store','dd');
+		foreach($storeDirectories as $storeDirectorie){
+			$dir = $_SERVER['DOCUMENT_ROOT'].'/../'.$storeDirectorie.'/';
+			$directoryList = scandir($dir);
+			$src = $_SERVER['DOCUMENT_ROOT'].'/../'.$storeDirectorie.'/12345/';
+			$srcDirectoryList = scandir($src);
+			for($i=2;$i<count($directoryList);$i++){
+				if($directoryList[$i]!='12345'){
+					$destination = $_SERVER['DOCUMENT_ROOT'].'/../'.$storeDirectorie.'/'.$directoryList[$i];
+					if(is_dir($destination)){
+						foreach($srcDirectoryList as $directory){
+							if($directory!='license.php' && $directory!='.' && $directory!='..'&& $directory!='uploads'){
+								$this->full_copy( $src.$directory, $destination.'/'.$directory );
+							}
+						}					
+					}
 				}
 			}
-		}		
+		}
 		die;
 	}
 	
@@ -242,13 +381,99 @@ class Opportunity extends CI_Controller {
 		die;
 	}
 	
-	public function sales_contact($id=0){
+	public function assign_sales_company_to_broker(){
+		$data= 0;
+		if(isset($_POST) && count($_POST)>0){
+			$salesCompanies = $this->input->post('companies');
+			if(!empty($salesCompanies)){
+				$salesC = json_decode($salesCompanies);
+				$leadID = $this->input->post('l');
+				$brokerCompany = $this->input->post('broker_company');
+				if(count($salesC)>0 && is_array($salesC) && (int) $leadID>0 && (int)$brokerCompany>0){
+					for($i=0;$i<count($salesC);$i++){
+						/*Assign broker to sales companies*/
+						if((int)$salesC[$i]>0){
+							$this->lead_model->deleteSalesBrokerLeadCompany(array('lead_id'=>$leadID,'sales_company_id'=>$salesC[$i]));
+							$data = $this->lead_model->insertSalesBrokerLeadCompany(array('lead_id'=>$leadID,'broker_company_id'=>$brokerCompany,'sales_company_id'=>$salesC[$i]));
+						}						
+					}
+				}
+			}
+		}
+		echo $data;
+		die;
+	}
+	
+	function assign_presales_company_to_broker(){
+		$data= 0;
+		if(isset($_POST) && count($_POST)>0){
+			$salesCompanies = $this->input->post('companies');
+			if(!empty($salesCompanies)){
+				$salesC = json_decode($salesCompanies);
+				$leadID = $this->input->post('l');
+				$brokerCompanyRaw = $this->input->post('broker_company');
+				$brokerCompany = array();
+				if(!empty($brokerCompanyRaw)){
+					$brokerCompany = json_decode($brokerCompanyRaw);
+				}
+				
+				if(count($salesC)>0 && is_array($salesC) && (int) $leadID>0 && count($brokerCompany)>0){
+					for($i=0;$i<count($salesC);$i++){
+						/*Assign broker to sales companies*/
+						if((int)$salesC[$i]>0){
+							for($j=0;$j<count($brokerCompany);$j++){
+								if((int)$brokerCompany[$j][0]>0){
+									$data = $this->lead_model->insertPreSalesBrokerLeadCompany(array('lead_id'=>$leadID,'broker_company_id'=>$brokerCompany[$j][1],'company_id'=>$salesC[$i],'broker_id'=>$brokerCompany[$j][0]));
+								}
+							}
+						}						
+					}
+				}
+			}
+		}
+		echo $data;
+		die;
+	}
+	
+	function sales_pre_contact($id=0,$activity=0){
 		$data = array();
 		if($id>0){
-			$data['companies'] = $this->customer_model->companyList();
-			/*$data['market_sectors'] = $this->opportunity_model->getAllMarketSectors();	*/
-			$data['selected_sales_companies'] = $this->lead_model->getSalesActivityCompaniesByLead($id);
+			$data['companies'] = $this->client_model->getAllContacts();
+			$data['selected_sales_companies'] = $this->lead_model->getPreSalesBrokerListByLead($id);
+			$data['selected_acquisition_companies'] = array();
 			$data['lead_id'] = $id;
+			$data['activity'] = $activity;
+			$this->layout->layout='opportunity';
+			$this->layout->title_for_layout = 'Backyard';
+			$this->layout->render('opportunity/sales_pre_contact',$data);
+		} else {
+			echo 'Sorry page not found.';
+			die;
+		}
+	}
+	
+	public function sales_contact($id=0,$activity=0){
+		$data = array();
+		if($id>0){
+			/*Implement which companies assign to LoggedIn User*/
+			/*
+				if($this->session->userdata['type']<8){
+					$data['companies'] = $this->lead_model->companyListAssignedUser($this->session->userdata['id']);
+				}
+				
+			*/
+			/**/
+			$data['companies'] = $this->customer_model->companyList();
+			$data['selected_sales_companies'] = array();
+			$data['selected_acquisition_companies'] = array();
+			/*$data['market_sectors'] = $this->opportunity_model->getAllMarketSectors();	*/
+			if($activity==1 || $activity==2){
+				$data['selected_sales_companies'] = $this->lead_model->getSalesActivityCompaniesByLead($id);
+				$data['selected_acquisition_companies'] = $this->lead_model->getAcquisitionActivityCompaniesByLead($id);
+			}
+			
+			$data['lead_id'] = $id;
+			$data['activity'] = $activity;
 			$this->layout->layout='opportunity';
 			$this->layout->title_for_layout = 'Backyard';
 			$this->layout->render('opportunity/sales_contact',$data);
@@ -264,22 +489,29 @@ class Opportunity extends CI_Controller {
 		if(isset($_POST) && count($_POST)>0){
 			$companyID = $this->input->post("c");
 			$leadID = $this->input->post("l");
-			$delete = $this->opportunity_model->deleteInviteesByLeadAndCompany($leadID,$companyID);
-			$checkCompanyAlreadyInvite = $this->customer_model->getCompanyDataByID($companyID);	
-			$acquisitionData = $this->acquisition_model->getData($leadID);	
-			$curl = curl_init();				
-			curl_setopt_array($curl, array(
-				CURLOPT_RETURNTRANSFER => 1,
-				CURLOPT_URL => 'http://appadmin.synpat.com/Users/delete_single_invitee',
-				CURLOPT_USERAGENT => 'Send Request for create demo portfolio',
-				CURLOPT_POST => 1,
-				CURLOPT_POSTFIELDS => array(
-					'license_number' => $acquisitionData['acquisition']->store_name,
-					'company_name'=>$checkCompanyAlreadyInvite->company_name
-				)
-			));
-			$resp = curl_exec($curl);
-			$data=1;
+			$explodeCompany = explode(',',$companyID);
+			if(count($explodeCompany)>0){
+				foreach($explodeCompany as $company){
+					if((int)$company>0){
+						$delete = $this->opportunity_model->deleteInviteesByLeadAndCompany($leadID,$company);
+						$checkCompanyAlreadyInvite = $this->customer_model->getCompanyDataByID($company);	
+						$acquisitionData = $this->acquisition_model->getData($leadID);	
+						$curl = curl_init();				
+						curl_setopt_array($curl, array(
+							CURLOPT_RETURNTRANSFER => 1,
+							CURLOPT_URL => 'http://appadmin.synpat.com/Users/delete_single_invitee',
+							CURLOPT_USERAGENT => 'Send Request for create demo portfolio',
+							CURLOPT_POST => 1,
+							CURLOPT_POSTFIELDS => array(
+								'license_number' => $acquisitionData['acquisition']->store_name,
+								'company_name'=>$checkCompanyAlreadyInvite->company_name
+							)
+						));
+						$resp = curl_exec($curl);
+						$data=1;
+					}
+				}
+			}			
 		}
 		echo $data;
 		die;
@@ -296,6 +528,44 @@ class Opportunity extends CI_Controller {
 		echo $data;
 		die;
 	}
+	
+	public function invitees_in_bulk(){
+		if(isset($_POST) && count($_POST)>0){
+			$getData = $this->input->post();
+			$leadID = $getData['lead_id'];
+			$companies = json_decode($getData['companies']);
+			if(count($companies)>0){
+				$acquisitionData = $this->acquisition_model->getData($leadID);		
+				foreach($companies as $companyID){
+					if((int)$companyID>0){
+						$checkCompanyAlreadyInvite = $this->opportunity_model->checkCompanyInSales($leadID,$companyID);
+						if(count($checkCompanyAlreadyInvite)==0){
+							$saveData = $this->opportunity_model->insertInvitees(array('lead_id'=>$leadID,'contact_id'=>$companyID));
+							$checkCompanyAlreadyInvite = $this->customer_model->getCompanyDataByID($companyID);	
+							$acquisitionData = $this->acquisition_model->getData($leadID);				
+							$curl = curl_init();				
+							curl_setopt_array($curl, array(
+								CURLOPT_RETURNTRANSFER => 1,
+								CURLOPT_URL => 'http://appadmin.synpat.com/Users/add_single_invitee',
+								CURLOPT_USERAGENT => 'Send Request for create demo portfolio',
+								CURLOPT_POST => 1,
+								CURLOPT_POSTFIELDS => array(
+									'license_number' => $acquisitionData['acquisition']->store_name,
+									'company_name'=>$checkCompanyAlreadyInvite->company_name
+								)
+							));
+							$resp = curl_exec($curl);
+							echo $saveData;
+						} else {
+							echo $checkCompanyAlreadyInvite->id;
+						}
+					}
+				}
+			}
+		}
+		die;
+	}
+	
 	
 	public function invite_company(){
 		if(isset($_POST) && count($_POST)>0){
@@ -1154,7 +1424,7 @@ class Opportunity extends CI_Controller {
 							if(count($getNDAFileNameWithAccordingLeadType)>0){								
 								$fileID = (object)array("id"=>$getNDAFileNameWithAccordingLeadType->doc_id) ;
 							} else {
-								$fileID = $service->getFileNameFromChildern($parentFolderID,'6 SynPat - Patent License Agreement (PLA) - Master');
+								$fileID = $service->getFileNameFromChildern($parentFolderID,'PLA - Patent License Agreement - Master');
 							}
 							if(!empty($fileID)){
 								$fileParent = new Google_Service_Drive_ParentReference();
@@ -1405,7 +1675,7 @@ class Opportunity extends CI_Controller {
 												$fileID = $service->getFileNameFromChildern($parentFolderID,'3 SynPat - Patent Purchase Agreement (PPA) - Litigated - Master');
 											break;*/
 											default:
-												$fileID = $service->getFileNameFromChildern($parentFolderID,'3 SynPat - Patent Purchase Agreement (PPA) - Master');
+												$fileID = $service->getFileNameFromChildern($parentFolderID,'PPA - Patent Purchase Agreement - Master');
 											break;
 										}										
 									}
@@ -1429,7 +1699,7 @@ class Opportunity extends CI_Controller {
 												if(count($getNDAFileNameWithAccordingLeadType)>0){												
 													$PPPfileID = (object)array("id"=>$getNDAFileNameWithAccordingLeadType->doc_id) ;
 												} else {
-													$PPPfileID = $service->getFileNameFromChildern($parentFolderID,'9 SynPat - Program Procedure and Policies (PPP) - Master 12-9-14');
+													$PPPfileID = $service->getFileNameFromChildern($parentFolderID,'PPP - Program Procedure and Policies - Master 12-9-14');
 												}												
 												if(!empty($PPPfileID)){
 													$PPPName = "Program Procedure and Policies (PPP) - ".$findLeadData->lead_name;
@@ -1455,6 +1725,7 @@ class Opportunity extends CI_Controller {
 											$this->opportunity_model->updateStage($findLeadData->id,array('stage'=>'5'));
 											$url = $getFileInfo->alternateLink;
 											$user_history = array('lead_id'=>$leadID,'user_id'=>$this->session->userdata['id'],'message'=>"PPP Created",'opportunity_id'=>1,'create_date'=>$dateUpdated);
+											$this->user_model->addUserHistory($user_history);
 											$user_history = array('lead_id'=>$leadID,'user_id'=>$this->session->userdata['id'],'message'=>"PPA drafted ",'opportunity_id'=>1,'create_date'=>$dateUpdated);
 											$this->user_model->addUserHistory($user_history);	
 											echo json_encode(array('url'=>$url,'date_updated'=>$dateUpdated,"ppp_url"=>$alternateUrlPPP));
@@ -1588,6 +1859,7 @@ class Opportunity extends CI_Controller {
 	
 	public function updateIllustration(){
 		$data = 0;
+		$dataFindIllustration = false;
 		if(isset($_POST) && count($_POST)>0){
 			$leadID = $this->input->post('token');
 			$leadInfo = $this->lead_model->getLeadData($leadID);
@@ -1622,11 +1894,14 @@ class Opportunity extends CI_Controller {
 								$illustrationFileName = 'Synpat - Claim Illustration - '.$leadInfo->lead_name.' - '.$patent;
 								$driveService = new DriveServiceHelper();
 								$illuFolder = $driveService->getFileNameFromChildern($leadFolderID,"Illustration");
-								if(is_object($illuFolder) && !empty($illuFolder->getId())){
+								$id = $illuFolder->getId();
+								if(is_object($illuFolder) && !empty($id)){
 									$driveService = new DriveServiceHelper();
 									$getIllustrationFileInfo = $driveService->getFileNameFromChildern($illuFolder->getId(),$illustrationFileName);
-									if(is_object($getIllustrationFileInfo)&& !empty($getIllustrationFileInfo->getId())){
+									$illuID = $getIllustrationFileInfo->getId();
+									if(is_object($getIllustrationFileInfo)&& !empty($illuID)){
 										$inventionsData[] = array("patent_id"=>$patent,"file"=>$getIllustrationFileInfo->alternateLink);
+										$dataFindIllustration = true;
 									}
 								}
 							}
@@ -1656,7 +1931,12 @@ class Opportunity extends CI_Controller {
 				}
 			}
 		}
-		echo $data;
+		if($dataFindIllustration ===false){
+			echo "1";
+		} else {
+			echo $data;
+		}
+		
 		die;
 	}
 	
@@ -1971,7 +2251,6 @@ class Opportunity extends CI_Controller {
 	
 	function docket_save(){
 		if(isset($_POST) && count($_POST)>0){
-			
 			$docketData = $this->input->post();
 			$other = $docketData['other'];
 			$leadID = $docketData['other']['lead_id'];
@@ -2078,6 +2357,45 @@ class Opportunity extends CI_Controller {
 							$potential_participants = $docketData['acquisition']['potential_participants'];
 						}
 						$saveData = $this->acquisition_model->updateData($leadID,array('ppa'=>$other['ppa'],'pla'=>$other['pla'],'rtp'=>$other['rtp'],'ppp'=>$other['ppp'],'sla'=>$other['sla'],'syndication'=>'','damage'=>'','category'=>$docketData['acquisition']['category'],'active_button'=>$activeButton,'potential_participants'=>$potential_participants,'final_participants'=>$final_participants,'regular_license_starts'=>$docketData['acquisition']['regular_license_starts'],'late_license_starts'=>$docketData['acquisition']['late_license_starts'],'store'=>$docketData['acquisition']['store'],'cost_price'=>$docketData['acquisition']['cost_price']));
+						/*Link update in invitation template*/
+						if((int)$docketData['acquisition']['category']>0){
+							$getTemplate = $this->general_model->findInvitationTemplateByLead($leadID);
+							if(count($getTemplate)>0){
+								$template = $getTemplate->template_html;					
+								$urlName ="";
+								$category_list = $this->customer_model->categoryList(0);
+								$lead_data = $this->lead_model->getLeadData($leadID);
+								if(!empty($acquisitionData['acquisition']->store_name)):				
+								if($acquisitionData['acquisition']->category>0){
+									if(count($category_list)>0){
+										for($cc=0;$cc<count($category_list);$cc++){
+											if($category_list[$cc]->id==$acquisitionData['acquisition']->category){
+												$urlName = $category_list[$cc]->name;
+												$urlName = str_replace('','_',$urlName);
+												$urlName = str_replace('-','_',$urlName);
+												$urlName = str_replace('&',' ',$urlName);
+												$urlName = str_replace('&amp;',' ',$urlName);
+												$urlName = preg_replace("/[^a-zA-Z0-9_\s-]/", "_", $urlName);
+												$urlName = preg_replace('/-/','_',$urlName);
+												$urlName = preg_replace('/[\s,\-!]/',' ',$urlName);
+												$urlName = preg_replace('/\s+/','_',$urlName);
+											}
+										}
+									}
+									if(!empty($urlName)){
+										$urlName ='/departments/'.$urlName.'-'.$acquisitionData['acquisition']->category.'/'.$lead_data->serial_number.'/';
+									}
+								}
+								endif;
+								if(!empty($urlName)){
+									$urlName = "http://www.synpat.com".$urlName;
+								}
+								$template =  str_replace('link-data-href=""',"href='".$urlName."'",$template);
+								$getTemplate->template_html = $template;
+								$this->general_model->updateTemplate((array)$getTemplate,$getTemplate['id']);
+							}
+						}
+						/*End link update in invitation*/
 						/*Insert Data Potential*/
 						$potentialSyndicateData = json_decode($other['potential_data']);
 						if(count($potentialSyndicateData)>0){
@@ -2393,12 +2711,41 @@ class Opportunity extends CI_Controller {
 		die;		
 	}
 	
+	function updateAllInvitees($lead_id){
+		$acquisitionData = $this->acquisition_model->getData($lead_id);
+		$getAllContact = $this->lead_model->findSalesActivityCompanies($lead_id);
+		
+		if(count($acquisitionData)>0){
+			$curl = curl_init();
+			// Set some options - we are passing in a useragent too here
+			curl_setopt_array($curl, array(
+				CURLOPT_RETURNTRANSFER => 1,
+				CURLOPT_URL => 'http://appadmin.synpat.com/Users/add_invitees',
+				CURLOPT_USERAGENT => 'Send Request for create demo portfolio',
+				CURLOPT_POST => 1,
+				CURLOPT_POSTFIELDS => array(
+					'license_number' => $acquisitionData['acquisition']->store_name,
+					'invitees'=>json_encode($getAllContact)
+				)
+			));
+			
+			// Send the request & save response to $resp
+			$resp = curl_exec($curl);
+			echo "<pre>";
+			print_r($resp);
+			die;
+			if($resp){		
+			}							
+		}
+	}
+	
+	
 	public function invitees(){
 		if(isset($_POST) && count($_POST)>0){
 			$getData = $this->input->post();
 			if(isset($getData['invite']['lead_id']) && (int) $getData['invite']['lead_id']>0){
 				if(count($getData['invite']['contact_id'])>0){
-					$saveData = 0;
+					/*$saveData = 0;
 					$deleteOldData = $this->opportunity_model->deleteInvitees($getData['invite']['lead_id']);
 					$contactsUpdate = array();
 					$getAllContact = array();
@@ -2415,7 +2762,7 @@ class Opportunity extends CI_Controller {
 								}
 							}
 						}						
-					}
+					}*/
 					/*$getAllContact = $this->opportunity_model->findInvitees(implode(",",$getData['invite']['contact_id']));*/
 					if($saveData>0){
 						/*Send Invitees*/
@@ -2562,16 +2909,32 @@ class Opportunity extends CI_Controller {
 			if(isset($getData['invitee']) && count($getData['invitee'])>0){
 				$recordID = 0;
 				if((int)$getData['invitee']['id']==0){
+					if($getData['invitee']['company_id']==""){
+						if(!empty($getData['invitee']['company_name'])){
+							$companyID = $this->customer_model->insertCompany(array('company_name'=>$getData['invitee']['company_name'],'start_date'=>'0000-00-00 00:00:00','end_date'=>'0000-00-00 00:00:00'));
+						}
+						$getData['invitee']['company_id'] = $companyID;
+					}
+					if(isset($getData['invitee']['company_name'])){
+						unset($getData['invitee']['company_name']);
+					}
 					$saveData = $this->client_model->insert($getData['invitee']);
 					$recordID = $saveData;
 					$message = "New record in contacts";
 				} else {
+					if(isset($getData['invitee']['company_name'])){
+						unset($getData['invitee']['company_name']);
+					}
 					$recordID = $getData['invitee']['id'];
 					unset($getData['invitee']['id']);
 					if(!isset($getData['invitee']['gateway'])){
 						$getData['invitee']['gateway'] = 0;
 					}
+					if(!isset($getData['invitee']['no_contact'])){
+						$getData['invitee']['no_contact'] = 0;
+					}
 					$saveData = $this->client_model->update($recordID,$getData['invitee']);	
+					$saveData =$recordID;
 					$message = "Update contacts";					
 				}				
 				if($saveData>0){
@@ -2984,28 +3347,77 @@ class Opportunity extends CI_Controller {
 					}
 					unset($task['record']);
 					unset($task['type']);
+					if(!isset($task['execution_date']) || empty($task['execution_date'])){
+						$task['execution_date'] = date('Y-m-d');
+					}
 					$send = $this->opportunity_model->sendApprovalRequest($task);
 					$checkUserData = $this->user_model->getUserData($task['user_id']);
+					$activities = $this->input->post('activity');
+					if(!empty($activities['activity_type']) && (int)$activities['activity_type']>0){
+						$personID = $activities['person_id'];
+						$companyID = $activities['company_id'];
+						if((int)$personID>0 && (int)$companyID>0){
+							$act['lead_id'] = $task['lead_id'];
+							$act['contact_id'] = $personID;
+							$act['company_id'] = $companyID;
+							$act['note'] = $task['subject'];
+							$act['activity_date'] = date('Y-m-d H:i:s');
+							$act['user_id'] = $task['user_id'];
+							$act['subject'] = "";
+							$act['task_id'] = $send;
+							$act['type'] = 10;
+							switch((int)$activities['activity_type']){
+								case 1:
+									$this->lead_model->insetSalesActivity($act);
+								break;
+								case 2:
+									$this->lead_model->insertAcquistionActivity($act);
+								break;
+								case 3:
+									$this->lead_model->insertPreSaleActivity($act);
+								break;
+							}
+						}
+					}
 					if(count($checkUserData) && (int)$sendEmail==1){
-						$email=$checkUserData->email;
-						$leadData = $this->lead_model->getLeadData($task['lead_id']);
-						$this->load->library('email');
+						/*$leadData = $this->lead_model->getLeadData($task['lead_id']);*/
+						/*$this->load->library('email');
 						$this->email->from($this->session->userdata['email'], $this->session->userdata['name']);
 						$this->email->to($checkUserData->email); 
 						$this->email->set_mailtype('html'); 
-						$this->email->subject($task['subject']);
+						$this->email->subject($task['subject']);*/
+						if(!isset($_SESSION)){
+							session_start();
+						}
+						$email = array();
+						$email['to'] = $checkUserData->email;
+						$email['to_name'] = $checkUserData->name;
+						$email['subject'] =  $task['subject'];
+						$email['cc'] = '';
+						$email['bcc'] = '';
+						$email['thread_id'] = '';
+						$email['message_id'] = '';
+						$email['from_name'] = $this->session->userdata['name'];
+						$email['from_email'] = $this->session->userdata['email'];
+						$email['reference'] = '';
 						$message = '<html><head><title>New Task</title></head><body>'.$task['message'];
 						if(isset($task['doc_url']) && !empty($task['doc_url'])){
 							$message .='<p>Document URL: <a href="'.$task['doc_url'].'">'.$task['doc_url'].'</a></p>';
 						}
-						$message .='<p>For Backyard <a href="'.$this->config->base_url().'dashboard/index/'.$leadData->id.'">Click here</a>.</p>';
+						$message .='<p>For Backyard <a href="'.$this->config->base_url().'dashboard/index/'.$task['lead_id'].'">Click here</a>.</p>';
 						$signature = "";
 						if(!empty($_POST['other']['signature'])){
 							$signature = $_POST['other']['signature'];
 						}
-						$message .=$signature.'</body></html>';
-						$this->email->message($message);	
-						$this->email->send();
+						$message .=$signature.'</body></html>';						
+						$email['message'] = $message;
+						$this->load->library('DriveServiceHelper');
+						$email['href'] = array();
+						$service = new GmailServiceHelper();
+						$service->setAccessToken($_SESSION['another_access_token']);
+						$send  = $service->sendMessage($email);
+						/*$this->email->message($message);	
+						$this->email->send();*/
 					}
 				} else {
 					unset($task['record']);
@@ -3025,28 +3437,29 @@ class Opportunity extends CI_Controller {
 					$this->session->set_flashdata('message','<p class="alert alert-success">Task Send!</p>');					
 					$this->load->library('user_agent');
 					if(isset($_POST['other']['return'])){
-						redirect('opportunity/docket/'.$task['lead_id']);
+						/*redirect('opportunity/docket/'.$task['lead_id']);*/
 					}  else if ($this->agent->is_referral()){
-						redirect($this->agent->referrer());
+						/*redirect($this->agent->referrer());*/
 					} else {
-						redirect('dashboard/index/'.$task['lead_id']);
+						/*redirect('dashboard/index/'.$task['lead_id']);*/
 					}					
 				} else {
 					$this->session->set_flashdata('message','<p class="alert alert-warning">Server busy please try after sometime.</p>');
 					if(isset($_POST['other']['return'])){
-						redirect('opportunity/docket/'.$task['lead_id']);
+						/*redirect('opportunity/docket/'.$task['lead_id']);*/
 					} else {
-						redirect('dashboard/index/'.$task['lead_id']);
+						/*redirect('dashboard/index/'.$task['lead_id']);*/
 					}						
 				}
 			} else {
 				$this->session->set_flashdata('message','<p class="alert alert-warning">Invalid data!</p>');
-				redirect('dashboard');	
+				/*redirect('dashboard');*/	
 			}		
 		} else {
 			$this->session->set_flashdata('message','<p class="alert alert-warning">Invalid data!</p>');
-			redirect('dashboard');	
+			/*redirect('dashboard');*/	
 		}
+		die;
 	}
 	
 	public function find_task(){
@@ -3068,9 +3481,14 @@ class Opportunity extends CI_Controller {
 				$parentTask= array('status'=>2,"completion_date"=>date('Y-m-d'));
 				$updated = $this->opportunity_model->updateApprovalData($task['parent_id'],$parentTask);
 				if($updated>0){
+					if(empty($task['execution_date'])){
+						$task['execution_date'] = date('Y-m-d');
+					}
 					$newTask= array("from_user_id"=>$task['from_user_id'],"lead_id"=>$task['lead_id'],"execution_date"=>$task['execution_date'],"message"=>$task['message'],"subject"=>$task['subject'],"user_id"=>$task['user_id'],"status"=>0,"type"=>$task['type'],"parent_id"=>$task['parent_id']);
 					$send = $this->opportunity_model->sendApprovalRequest($newTask);
 					if($send>0){
+						$user_history = array('lead_id'=>$task['lead_id'],'user_id'=>$this->session->userdata['id'],'message'=>"Forward a task",'opportunity_id'=>0,'create_date'=>date('Y-m-d H:i:s'));
+						$this->user_model->addUserHistory($user_history);
 						$sendEmail = 0;
 						if(isset($task['send_email']) && $task['send_email']!=""){
 							$sendEmail = $task['send_email'];
@@ -3107,6 +3525,8 @@ class Opportunity extends CI_Controller {
 				$updated = $this->opportunity_model->updateApprovalData($task['parent_id'],$parentTask);
 				$this->lead_model->deleteTask($task['parent_id']);
 				if($updated>0){
+					$user_history = array('lead_id'=>$task['lead_id'],'user_id'=>$this->session->userdata['id'],'message'=>"Delete a task",'opportunity_id'=>0,'create_date'=>date('Y-m-d H:i:s'));
+						$this->user_model->addUserHistory($user_history);
 					$this->approved_doc($task['parent_id']);
 					$this->session->set_flashdata('message','<p class="alert alert-success">Remove Task</p>');
 					$this->load->library('user_agent');
@@ -3124,6 +3544,8 @@ class Opportunity extends CI_Controller {
 				$parentTask = array('status'=>1,"completion_date"=>date('Y-m-d'));
 				$updated = $this->opportunity_model->updateApprovalData($task['parent_id'],$parentTask);
 				if($updated>0){
+					$user_history = array('lead_id'=>$task['lead_id'],'user_id'=>$this->session->userdata['id'],'message'=>"Complete a task",'opportunity_id'=>0,'create_date'=>date('Y-m-d H:i:s'));
+						$this->user_model->addUserHistory($user_history);
 					$this->approved_doc($task['parent_id']);
 					$this->session->set_flashdata('message','<p class="alert alert-success">Task Completed!</p>');
 					$this->load->library('user_agent');
@@ -3173,7 +3595,8 @@ class Opportunity extends CI_Controller {
 		if($post!=""){
 			$contacts = explode(',',$post);
 			foreach($contacts as $contact){
-				if(!empty(trim($contact))){
+				$contact = trim($contact);
+				if(!empty($contact)){
 					$this->client_model->deleteCompany($contact);	
 				}
 			}					
@@ -3219,7 +3642,9 @@ class Opportunity extends CI_Controller {
 	public function contact_form($leadID=null,$type=null,$parent=null){
 		if($leadID!=null && $type!=null && $parent!=null){
 			$data = array();
-			$data['lead_data'] = $this->lead_model->getLeadData($leadID);
+			if($parent!='company_form'){
+				$data['lead_data'] = $this->lead_model->getLeadData($leadID);
+			}			
 			$data['type'] = $type;
 			$data['parentElement'] = $parent;
 			$data['contacts'] = $this->client_model->getAllContacts();
@@ -3305,15 +3730,18 @@ class Opportunity extends CI_Controller {
 		// Send the request & save response to $resp
 		$resp = curl_exec($curl);
 		$data['lists'] = array();
-		if($resp){
+		if($resp!=""){
 			$getAllData = json_decode($resp);
-			$data['lists'] = $getAllData->all_list;
-			$data['single_data'] = $getAllData->single_data;
+			if(isset($getAllData->all_list) && isset($getAllData->single_data)){
+				$data['lists'] = $getAllData->all_list;
+				$data['single_data'] = $getAllData->single_data;
+			}
+			
 			$data['lead_number'] = $leadNumber;
 			$data['serial_number'] = $serialNumber;
 		}	
 		$this->layout->layout='opportunity';	
-		$this->layout->title_for_layout = 'Synpat.com Patenteed Form List';
+		$this->layout->title_for_layout = 'Synpat.com Patent Form List';
 		$this->layout->render('opportunity/all_list',$data);
 	}
 	
@@ -3343,7 +3771,7 @@ class Opportunity extends CI_Controller {
 	
 	public function c_l(){
 		$data = "0";
-		if(isset($_POST) && count($_POST) > 0){
+		/*if(isset($_POST) && count($_POST) > 0){
             $getData = $this->input->post();
 			$curl = curl_init();
 			curl_setopt_array($curl, array(
@@ -3360,7 +3788,7 @@ class Opportunity extends CI_Controller {
 			if($resp){
 				$data = $resp;
 			}
-		}
+		}*/
 		echo $data;
 		die;
 	}
